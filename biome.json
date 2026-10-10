@@ -67,7 +67,8 @@
         }
       },
       "performance": {
-        "noImgElement": "off"
+        "noImgElement": "off",
+        "noJsxPropsBind": "off"
       }
     }
   },
@@ -86,6 +87,12 @@
     "globals": []
   },
   "overrides": [
+    {
+      "linter": {
+        "enabled": false
+      },
+      "includes": ["src/components/ui/**"]
+    },
     {
       "linter": {
         "rules": {

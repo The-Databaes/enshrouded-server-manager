@@ -1,42 +1,91 @@
-import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from "@tanstack/react-router";
 
+import { AppShell } from "@/components/app-shell/app-shell";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import appCss from "../styles.css?url";
 
 const RootDocument = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    // next-themes sets the `dark` class on <html> before hydration, so React
+    // must not complain when the server-rendered attribute differs.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body className="antialiased">
-        {children}
+        <ThemeProvider>
+          <TooltipProvider delayDuration={200}>
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </TooltipProvider>
+        </ThemeProvider>
         <Scripts />
       </body>
     </html>
   );
 };
 
+const RootComponent = () => {
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
+};
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Enshrouded Server Manager" },
       {
-        charSet: "utf-8",
+        name: "description",
+        content: "Manage your Enshrouded dedicated server.",
       },
       {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        name: "theme-color",
+        media: "(prefers-color-scheme: light)",
+        content: "#f6f1e7",
       },
       {
-        title: "Tauri + TanStack Start",
+        name: "theme-color",
+        media: "(prefers-color-scheme: dark)",
+        content: "#121726",
       },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       {
-        rel: "stylesheet",
-        href: appCss,
+        rel: "icon",
+        type: "image/png",
+        sizes: "32x32",
+        href: "/favicon-32x32.png",
       },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "16x16",
+        href: "/favicon-16x16.png",
+      },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/apple-touch-icon.png",
+      },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
 
   shellComponent: RootDocument,
+  component: RootComponent,
 });

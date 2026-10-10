@@ -1,6 +1,37 @@
-# Tauri 2.0 + TanStack Start React Template
+# Enshrouded Server Manager
 
-![Tauri window screenshot](public/tauri-tanstack-start-react-template-screenshot-01.png)
+![Enshrouded Server Manager banner](public/banner.png)
+
+A desktop manager for [Enshrouded](https://enshrouded.zimmermann-games.com/) dedicated servers,
+built with Tauri 2 and TanStack Start.
+
+## Design system
+
+The UI is built on [shadcn/ui](https://ui.shadcn.com/) (every component is installed under
+`src/components/ui`) with an Enshrouded-inspired theme defined in `src/styles.css`:
+
+- **Shroud** (dark, default): night-blue stone, the Flame's amber glow, teal/violet mist.
+- **Embervale** (light): parchment and warm stone with ember accents.
+
+Both themes are selectable from the header toggle (light / dark / system). Besides the standard
+shadcn tokens, brand colours are available as Tailwind utilities: `flame`, `ember`, `gold`,
+`shroud`, `success`, `warning`, `info` (e.g. `bg-flame`, `text-shroud`, `shadow-glow-flame`).
+Display text uses Cinzel (`font-display`), UI text uses Inter, logs use JetBrains Mono.
+
+Open the **Design System** page inside the app to browse every component in both themes.
+
+### Brand assets
+
+Sources live in `assets/brand` (`icon.svg`, `banner.svg`). Regenerate all derived icons
+(Tauri bundle icons, favicons, PWA icons, `public/banner.png`) with:
+
+```sh
+pnpm assets
+```
+
+---
+
+The sections below come from the original project template.
 
 This is a [Tauri 2.0](https://v2.tauri.app/) project template using [TanStack Start](https://tanstack.com/start/latest),
 bootstrapped by combining [`create @tanstack/start`](https://tanstack.com/start/latest/docs/framework/react/quick-start)

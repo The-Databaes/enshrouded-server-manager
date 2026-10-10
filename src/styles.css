@@ -1,35 +1,337 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/cinzel";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-@theme {
-  --font-sans: "Inter Variable", sans-serif;
-  --font-mono: "JetBrains Mono Variable", monospace;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* -------------------------------------------------------------------------
+ * Enshrouded Server Manager design tokens
+ *
+ * Two themes inspired by the game:
+ *   - "Embervale" (light): sun-bleached parchment and stone, ember accents.
+ *   - "Shroud"    (dark):  deep night-blue stone, the Flame's amber glow and
+ *                          the toxic teal/violet mist of the Shroud.
+ *
+ * Every shadcn component reads the standard tokens below (--background,
+ * --primary, ...). Brand-specific tokens (--flame, --shroud, --ember, ...)
+ * are exposed as Tailwind colors via the @theme block, e.g. `bg-flame`,
+ * `text-shroud`, `border-ember/40`.
+ * ---------------------------------------------------------------------- */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-inter-sans: "Inter Variable", sans-serif;
-  --font-jetbrains-mono: "JetBrains Mono Variable", monospace;
+  --radius: 0.5rem;
+
+  /* surfaces */
+  --background: oklch(0.972 0.012 85);
+  --foreground: oklch(0.23 0.025 262);
+  --card: oklch(0.99 0.008 88);
+  --card-foreground: oklch(0.23 0.025 262);
+  --popover: oklch(0.99 0.008 88);
+  --popover-foreground: oklch(0.23 0.025 262);
+
+  /* interactive */
+  --primary: oklch(0.63 0.17 52);
+  --primary-foreground: oklch(0.99 0.01 85);
+  --secondary: oklch(0.93 0.018 82);
+  --secondary-foreground: oklch(0.3 0.03 262);
+  --muted: oklch(0.94 0.014 84);
+  --muted-foreground: oklch(0.5 0.025 262);
+  --accent: oklch(0.92 0.035 192);
+  --accent-foreground: oklch(0.27 0.05 200);
+  --destructive: oklch(0.57 0.21 27);
+  --border: oklch(0.87 0.02 82);
+  --input: oklch(0.87 0.02 82);
+  --ring: oklch(0.7 0.15 55);
+
+  /* charts */
+  --chart-1: oklch(0.7 0.16 60);
+  --chart-2: oklch(0.62 0.11 195);
+  --chart-3: oklch(0.58 0.2 30);
+  --chart-4: oklch(0.55 0.16 290);
+  --chart-5: oklch(0.62 0.13 145);
+
+  /* sidebar */
+  --sidebar: oklch(0.955 0.014 85);
+  --sidebar-foreground: oklch(0.23 0.025 262);
+  --sidebar-primary: oklch(0.63 0.17 52);
+  --sidebar-primary-foreground: oklch(0.99 0.01 85);
+  --sidebar-accent: oklch(0.91 0.02 82);
+  --sidebar-accent-foreground: oklch(0.25 0.03 262);
+  --sidebar-border: oklch(0.87 0.02 82);
+  --sidebar-ring: oklch(0.7 0.15 55);
+
+  /* brand */
+  --flame: oklch(0.75 0.17 65);
+  --flame-foreground: oklch(0.25 0.06 55);
+  --ember: oklch(0.6 0.2 32);
+  --ember-foreground: oklch(0.99 0.01 85);
+  --shroud: oklch(0.58 0.12 195);
+  --shroud-foreground: oklch(0.98 0.01 195);
+  --gold: oklch(0.72 0.13 80);
+
+  /* status */
+  --success: oklch(0.6 0.15 150);
+  --success-foreground: oklch(0.98 0.01 150);
+  --warning: oklch(0.72 0.16 75);
+  --warning-foreground: oklch(0.25 0.05 75);
+  --info: oklch(0.6 0.13 230);
+  --info-foreground: oklch(0.98 0.01 230);
+
+  /* effects */
+  --glow-flame: 0 0 0 1px oklch(0.75 0.17 65 / 35%),
+    0 0 24px oklch(0.75 0.17 65 / 30%);
+  --glow-shroud: 0 0 0 1px oklch(0.58 0.12 195 / 35%),
+    0 0 24px oklch(0.58 0.12 195 / 25%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --background: oklch(0.165 0.02 262);
+  --foreground: oklch(0.93 0.012 85);
+  --card: oklch(0.205 0.022 262);
+  --card-foreground: oklch(0.93 0.012 85);
+  --popover: oklch(0.215 0.022 262);
+  --popover-foreground: oklch(0.93 0.012 85);
+
+  --primary: oklch(0.79 0.16 70);
+  --primary-foreground: oklch(0.2 0.05 55);
+  --secondary: oklch(0.27 0.025 262);
+  --secondary-foreground: oklch(0.93 0.012 85);
+  --muted: oklch(0.25 0.022 262);
+  --muted-foreground: oklch(0.7 0.02 255);
+  --accent: oklch(0.28 0.04 215);
+  --accent-foreground: oklch(0.9 0.05 190);
+  --destructive: oklch(0.68 0.19 25);
+  --border: oklch(0.9 0.02 85 / 11%);
+  --input: oklch(0.9 0.02 85 / 14%);
+  --ring: oklch(0.75 0.15 70);
+
+  --chart-1: oklch(0.8 0.16 70);
+  --chart-2: oklch(0.75 0.12 190);
+  --chart-3: oklch(0.68 0.19 30);
+  --chart-4: oklch(0.68 0.15 295);
+  --chart-5: oklch(0.72 0.14 150);
+
+  --sidebar: oklch(0.14 0.02 262);
+  --sidebar-foreground: oklch(0.9 0.012 85);
+  --sidebar-primary: oklch(0.79 0.16 70);
+  --sidebar-primary-foreground: oklch(0.2 0.05 55);
+  --sidebar-accent: oklch(0.22 0.024 262);
+  --sidebar-accent-foreground: oklch(0.95 0.012 85);
+  --sidebar-border: oklch(0.9 0.02 85 / 8%);
+  --sidebar-ring: oklch(0.75 0.15 70);
+
+  --flame: oklch(0.8 0.16 70);
+  --flame-foreground: oklch(0.2 0.05 55);
+  --ember: oklch(0.66 0.2 32);
+  --ember-foreground: oklch(0.99 0.01 85);
+  --shroud: oklch(0.75 0.12 190);
+  --shroud-foreground: oklch(0.15 0.03 200);
+  --gold: oklch(0.8 0.13 85);
+
+  --success: oklch(0.72 0.15 150);
+  --success-foreground: oklch(0.15 0.03 150);
+  --warning: oklch(0.8 0.15 80);
+  --warning-foreground: oklch(0.22 0.05 80);
+  --info: oklch(0.72 0.12 230);
+  --info-foreground: oklch(0.15 0.03 230);
+
+  --glow-flame: 0 0 0 1px oklch(0.8 0.16 70 / 40%),
+    0 0 28px oklch(0.8 0.16 70 / 28%);
+  --glow-shroud: 0 0 0 1px oklch(0.75 0.12 190 / 40%),
+    0 0 28px oklch(0.75 0.12 190 / 25%);
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+  --font-display: "Cinzel Variable", "Inter Variable", serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-flame: var(--flame);
+  --color-flame-foreground: var(--flame-foreground);
+  --color-ember: var(--ember);
+  --color-ember-foreground: var(--ember-foreground);
+  --color-shroud: var(--shroud);
+  --color-shroud-foreground: var(--shroud-foreground);
+  --color-gold: var(--gold);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --shadow-glow-flame: var(--glow-flame);
+  --shadow-glow-shroud: var(--glow-shroud);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-flicker: flicker 2.6s ease-in-out infinite;
+  --animate-drift: drift 14s ease-in-out infinite alternate;
+
+  @keyframes flicker {
+    0%,
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    30% {
+      opacity: 0.88;
+      transform: translateY(-1px) scale(1.02);
+    }
+    60% {
+      opacity: 0.95;
+      transform: translateY(0.5px) scale(0.99);
+    }
+  }
+
+  @keyframes drift {
+    from {
+      transform: translate3d(-2%, 0, 0);
+    }
+    to {
+      transform: translate3d(2%, -1%, 0);
+    }
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: var(--font-inter-sans);
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  code,
+  kbd,
+  pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--flame) 40%, transparent);
+  }
+
+  /* slim scrollbars that sit quietly on both themes */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--foreground) 22%, transparent)
+      transparent;
+  }
 }
 
-code {
-  font-family: var(--font-jetbrains-mono);
+/* Branded, token-driven surfaces -------------------------------------- */
+
+/* Night sky + shroud mist. Good for hero banners and empty states. */
+@utility bg-shroud-mist {
+  background-color: var(--card);
+  background-image:
+    radial-gradient(
+      60% 70% at 15% 110%,
+      color-mix(in oklch, var(--shroud) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 60% at 90% 115%,
+      color-mix(in oklch, var(--chart-4) 35%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 50% at 30% -10%,
+      color-mix(in oklch, var(--flame) 22%, transparent),
+      transparent 70%
+    );
+}
+
+/* Warm ember wash, e.g. for the active sidebar item or hero cards. */
+@utility bg-ember-wash {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--flame) 18%, transparent),
+    color-mix(in oklch, var(--ember) 8%, transparent) 60%,
+    transparent
+  );
+}
+
+/* Gold gradient text for the wordmark and page titles. */
+@utility text-flame-gradient {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--flame) 70%, white) 0%,
+    var(--flame) 55%,
+    var(--gold) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Thin gold hairline used as a section divider. */
+@utility rule-gold {
+  height: 1px;
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--gold) 80%, transparent),
+    transparent
+  );
 }

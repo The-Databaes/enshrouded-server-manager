@@ -73,6 +73,12 @@ export default defineConfig(async () => ({
 
   // Prevent Vite from obscuring rust errors
   clearScreen: false,
+  // The prerender step spins up a preview server; keep it off the dev port so
+  // `vite build` works while a dev server is running.
+  preview: {
+    port: 3010,
+    strictPort: false,
+  },
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 3000,
