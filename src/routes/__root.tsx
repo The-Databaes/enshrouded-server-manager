@@ -6,6 +6,9 @@ import {
 } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/app-shell/app-shell";
+import { WindowFrame } from "@/components/app-shell/window-frame";
+import { SteamCmdGate } from "@/components/steamcmd/steamcmd-gate";
+import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,9 +37,15 @@ const RootDocument = ({ children }: { children: React.ReactNode }) => {
 
 const RootComponent = () => {
   return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    <WindowFrame>
+      <SteamCmdProvider>
+        <SteamCmdGate>
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        </SteamCmdGate>
+      </SteamCmdProvider>
+    </WindowFrame>
   );
 };
 

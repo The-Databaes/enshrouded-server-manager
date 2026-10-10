@@ -23,6 +23,8 @@
 
 :root {
   --radius: 0.5rem;
+  /* custom window title bar (see app-shell/title-bar.tsx) */
+  --titlebar-height: 2rem;
 
   /* surfaces */
   --background: oklch(0.972 0.012 85);
@@ -252,8 +254,9 @@
     color-scheme: dark;
   }
 
+  /* The window never scrolls as a whole; #app-viewport below the title bar does. */
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply overflow-hidden bg-background text-foreground antialiased;
     margin: 0;
   }
 

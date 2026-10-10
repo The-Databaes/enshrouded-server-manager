@@ -5,8 +5,10 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 /** Sidebar + header chrome that wraps every page. */
 export const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    // The sidebar is `fixed` to the viewport, so shift it below the custom
+    // title bar; the wrapper fills the scroll area rather than the window.
+    <SidebarProvider className="min-h-full">
+      <AppSidebar className="top-(--titlebar-height) h-[calc(100svh-var(--titlebar-height))]" />
       <SidebarInset className="min-w-0">
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">

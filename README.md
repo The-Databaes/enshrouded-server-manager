@@ -5,6 +5,31 @@
 A desktop manager for [Enshrouded](https://enshrouded.zimmermann-games.com/) dedicated servers,
 built with Tauri 2 and TanStack Start.
 
+## SteamCMD
+
+The manager needs [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) to download and
+update the Enshrouded server. Valve's licence doesn't allow bundling it, so on first launch the app
+shows a setup screen that either downloads it from Valve into the app data folder (and keeps it
+updated) or points at an existing install. It can be updated, changed or removed later under
+**Settings**.
+
+Everything the app stores lives in `~/.enshrouded-server-manager` (e.g.
+`C:\Users\you\.enshrouded-server-manager`): `config.json`, the app-downloaded SteamCMD in
+`steamcmd\` and, unless you pick another folder, the server files.
+
+The **Servers** page installs the Enshrouded Dedicated Server (Steam app 2278520, anonymous
+login) with SteamCMD, and can check for updates, update and verify it. Point it at a folder that
+already has the server and it is verified and adopted instead of downloaded again.
+
+SteamCMD runs inside a pseudo-console (ConPTY) so its output streams live: with plain pipes it
+buffers everything until it exits. Every job shows parsed progress (bytes, speed, %) plus the raw
+**live console**.
+
+Outside the Tauri window (`pnpm dev:vite`), these calls are answered by browser-only stand-ins
+(`src/lib/steamcmd/mock.ts`, `src/lib/server/mock.ts`). Seed them with
+`?mockSteamcmd=ready|external|missing` and `?mockServer=installed|update|incomplete`.
+To run a real download test from Rust: `cargo test -- --ignored live_install --nocapture`.
+
 ## Design system
 
 The UI is built on [shadcn/ui](https://ui.shadcn.com/) (every component is installed under

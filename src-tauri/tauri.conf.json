@@ -14,7 +14,8 @@
       {
         "title": "Enshrouded Server Manager",
         "width": 1280,
-        "height": 960
+        "height": 960,
+        "decorations": false
       }
     ],
     "security": {
