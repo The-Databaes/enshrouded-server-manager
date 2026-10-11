@@ -2,7 +2,7 @@
 
 ![Enshrouded Server Manager banner](public/banner.png)
 
-A desktop manager for [Enshrouded](https://enshrouded.zimmermann-games.com/) dedicated servers,
+A desktop manager for [Enshrouded](https://enshrouded.com/) dedicated servers,
 built with Tauri 2 and TanStack Start.
 
 ## SteamCMD
