@@ -44,20 +44,20 @@ export const SteamCmdSetup = ({
   onContinue: () => void;
 }) => {
   return (
-    <div className="flex min-h-full items-center justify-center bg-shroud-mist p-4 sm:p-8">
+    <div className="shroud-mist flex min-h-full items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl space-y-6">
         <header className="flex flex-col items-center gap-4 text-center">
-          <LogoMark tile className="size-16 rounded-2xl shadow-glow-flame" />
+          <LogoMark tile className="size-16 rounded-2xl shadow-ember" />
           <div className="space-y-2">
-            <Badge variant="outline" className="border-gold/40 text-gold">
+            <Badge variant="outline" className="border-ember/40 text-ember">
               First-time setup
             </Badge>
-            <h1 className="font-display text-3xl font-bold tracking-[0.08em] text-flame-gradient">
+            <h1 className="text-3xl font-semibold tracking-[0.06em]">
               {status.availability === "ready"
                 ? "The path is clear"
                 : "Before the Flame is lit"}
             </h1>
-            <div className="mx-auto h-px w-40 bg-linear-to-r from-transparent via-gold to-transparent" />
+            <div className="rule-ember mx-auto w-40" />
           </div>
         </header>
 
@@ -99,7 +99,7 @@ const SetupCard = ({ status }: { status: SteamCmdStatus }) => {
 
       <CardContent className="space-y-6">
         {status.availability === "missing" ? (
-          <Alert className="border-warning/40 text-warning">
+          <Alert variant="warning">
             <TriangleAlertIcon />
             <AlertTitle>SteamCMD has gone missing</AlertTitle>
             <AlertDescription>
@@ -120,9 +120,9 @@ const SetupCard = ({ status }: { status: SteamCmdStatus }) => {
             <Field orientation="horizontal" data-disabled={!status.canDownload}>
               <FieldContent>
                 <FieldTitle>
-                  <DownloadIcon className="size-4 text-flame" />
+                  <DownloadIcon className="size-4 text-ember" />
                   Download it for me
-                  <Badge className="bg-flame/15 text-flame">Recommended</Badge>
+                  <Badge className="bg-ember/15 text-ember">Recommended</Badge>
                 </FieldTitle>
                 <FieldDescription>
                   {status.canDownload
@@ -188,7 +188,7 @@ const DownloadPanel = ({
             About 45 MB once SteamCMD has finished its first-run update.
           </p>
         </div>
-        <Button className="shadow-glow-flame" onClick={onInstall}>
+        <Button className="shadow-ember" onClick={onInstall}>
           <DownloadIcon data-icon="inline-start" />
           Download SteamCMD
         </Button>
@@ -247,7 +247,7 @@ const ReadyCard = ({
       </p>
     </CardContent>
     <CardFooter className="justify-center">
-      <Button className="shadow-glow-flame" onClick={onContinue} autoFocus>
+      <Button className="shadow-ember" onClick={onContinue} autoFocus>
         Enter the manager
         <ArrowRightIcon data-icon="inline-end" />
       </Button>

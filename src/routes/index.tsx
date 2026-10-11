@@ -17,7 +17,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app-shell/app-shell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -117,9 +117,9 @@ const recentEvents = [
 ];
 
 const LEVEL_STYLES: Record<string, string> = {
-  info: "text-shroud",
+  info: "text-info",
   warn: "text-warning",
-  error: "text-ember",
+  error: "text-destructive",
 };
 
 /* ---- page ------------------------------------------------------------ */
@@ -129,7 +129,7 @@ const StatCard = ({
   value,
   hint,
   icon: Icon,
-  accent = "text-flame",
+  accent = "text-ember",
   children,
 }: {
   title: string;
@@ -142,12 +142,12 @@ const StatCard = ({
   <Card size="sm">
     <CardHeader>
       <CardDescription>{title}</CardDescription>
-      <CardTitle className="text-2xl font-semibold tabular-nums">
+      <CardTitle className="font-sans text-2xl font-semibold tracking-normal tabular-nums group-data-[size=sm]/card:text-2xl">
         {value}
       </CardTitle>
       <CardAction>
         <span
-          className={`flex size-8 items-center justify-center rounded-md bg-muted ${accent}`}
+          className={`flex size-8 items-center justify-center rounded-md border bg-muted ${accent}`}
         >
           <Icon className="size-4" />
         </span>
@@ -193,7 +193,7 @@ const Dashboard = () => {
             </Button>
             <Button
               size="sm"
-              className="shadow-glow-flame"
+              className="shadow-ember"
               onClick={() => toast.success("The Flame is already lit")}
             >
               <PlayIcon data-icon="inline-start" />
@@ -211,11 +211,8 @@ const Dashboard = () => {
           icon={FlameIcon}
           hint="Up 2d 14h 06m · v0.8.3.1"
         >
-          <Badge
-            variant="outline"
-            className="border-success/40 bg-success/10 text-success"
-          >
-            <span className="size-1.5 rounded-full bg-success" />
+          <Badge variant="success">
+            <BadgeDot />
             Flame is lit
           </Badge>
         </StatCard>
@@ -226,10 +223,7 @@ const Dashboard = () => {
           accent="text-shroud"
           hint="Peak today: 11"
         >
-          <Progress
-            value={19}
-            className="[&>[data-slot=progress-indicator]]:bg-shroud"
-          />
+          <Progress value={19} tone="shroud" />
         </StatCard>
         <StatCard
           title="CPU"
@@ -243,13 +237,9 @@ const Dashboard = () => {
           title="Memory"
           value="6.1 GB"
           icon={MemoryStickIcon}
-          accent="text-ember"
           hint="of 12 GB reserved"
         >
-          <Progress
-            value={51}
-            className="[&>[data-slot=progress-indicator]]:bg-ember"
-          />
+          <Progress value={51} />
         </StatCard>
       </div>
 
@@ -262,7 +252,7 @@ const Dashboard = () => {
               Concurrent players sampled every two hours
             </CardDescription>
             <CardAction>
-              <Badge variant="secondary">
+              <Badge variant="info">
                 <ActivityIcon />
                 Live
               </Badge>
@@ -320,7 +310,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-64">
-              <ul className="divide-y font-mono text-xs">
+              <ul className="divide-y divide-border/60 font-mono text-xs">
                 {recentEvents.map((event) => (
                   <li
                     key={`${event.at}-${event.text}`}
@@ -380,7 +370,7 @@ const Dashboard = () => {
                     <TableCell className="pl-6">
                       <div className="flex items-center gap-2">
                         <Avatar size="sm">
-                          <AvatarFallback className="bg-flame/15 text-flame">
+                          <AvatarFallback className="bg-ember/15 text-ember">
                             {player.name[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -429,10 +419,7 @@ const Dashboard = () => {
                 <span className="text-muted-foreground">Storage used</span>
                 <span className="tabular-nums">7.4 GB / 20 GB</span>
               </div>
-              <Progress
-                value={37}
-                className="[&>[data-slot=progress-indicator]]:bg-gold"
-              />
+              <Progress value={37} />
             </div>
             <ul className="space-y-2 text-sm">
               {[
@@ -446,7 +433,7 @@ const Dashboard = () => {
                 >
                   <div className="flex items-center gap-2">
                     <span
-                      className={`size-2 rounded-full ${backup.ok ? "bg-success" : "bg-ember"}`}
+                      className={`size-2 rounded-full ${backup.ok ? "bg-success" : "bg-destructive"}`}
                     />
                     <span className="font-medium tabular-nums">
                       {backup.id}

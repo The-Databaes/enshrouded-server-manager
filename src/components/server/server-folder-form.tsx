@@ -123,7 +123,7 @@ export const ServerFolderForm = ({
         <Button
           type="submit"
           disabled={!canSubmit}
-          className={existing ? undefined : "shadow-glow-flame"}
+          className={existing ? undefined : "shadow-ember"}
         >
           {existing ? (
             <ShieldCheckIcon data-icon="inline-start" />

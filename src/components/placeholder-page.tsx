@@ -26,14 +26,12 @@ export const PlaceholderPage = ({
   return (
     <>
       <PageHeader title={title} description={description} />
-      <Empty className="flex-1 bg-shroud-mist">
+      <Empty className="shroud-mist flex-1 border">
         <EmptyHeader>
-          <EmptyMedia variant="icon" className="bg-flame/15 text-flame">
+          <EmptyMedia variant="icon" className="bg-ember/15 text-ember">
             <Icon />
           </EmptyMedia>
-          <EmptyTitle className="font-display tracking-wider">
-            Still beyond the Shroud
-          </EmptyTitle>
+          <EmptyTitle>Still beyond the Shroud</EmptyTitle>
           <EmptyDescription>
             This screen is laid out but the logic behind it hasn't been written
             yet.

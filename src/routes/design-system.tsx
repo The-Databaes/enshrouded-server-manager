@@ -39,7 +39,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Calendar } from "@/components/ui/calendar";
@@ -166,9 +166,7 @@ const Section = ({
 }) => (
   <section id={anchor} className="scroll-mt-20 space-y-4">
     <div>
-      <h2 className="font-display text-lg font-semibold tracking-[0.08em]">
-        {title}
-      </h2>
+      <h2 className="text-lg font-semibold tracking-[0.06em]">{title}</h2>
       {description ? (
         <p className="text-sm text-muted-foreground">{description}</p>
       ) : null}
@@ -201,7 +199,6 @@ const TOKENS = [
   { name: "Secondary", cssVar: "--secondary", className: "bg-secondary" },
   { name: "Accent", cssVar: "--accent", className: "bg-accent" },
   { name: "Primary", cssVar: "--primary", className: "bg-primary" },
-  { name: "Destructive", cssVar: "--destructive", className: "bg-destructive" },
   { name: "Border", cssVar: "--border", className: "bg-border" },
   { name: "Ring", cssVar: "--ring", className: "bg-ring" },
   { name: "Sidebar", cssVar: "--sidebar", className: "bg-sidebar" },
@@ -209,21 +206,31 @@ const TOKENS = [
 ];
 
 const BRAND_TOKENS = [
-  { name: "Flame", cssVar: "--flame", className: "bg-flame shadow-glow-flame" },
-  { name: "Ember", cssVar: "--ember", className: "bg-ember" },
-  { name: "Gold", cssVar: "--gold", className: "bg-gold" },
   {
-    name: "Shroud",
-    cssVar: "--shroud",
-    className: "bg-shroud shadow-glow-shroud",
+    name: "Ember · fire",
+    cssVar: "--ember",
+    className: "bg-ember shadow-ember",
   },
-  { name: "Success", cssVar: "--success", className: "bg-success" },
-  { name: "Warning", cssVar: "--warning", className: "bg-warning" },
-  { name: "Info", cssVar: "--info", className: "bg-info" },
+  {
+    name: "Shroud · mist",
+    cssVar: "--shroud",
+    className: "bg-shroud shadow-shroud",
+  },
+  { name: "Firelight", cssVar: "--firelight", className: "bg-firelight" },
+  { name: "Stone · masonry", cssVar: "--stone", className: "bg-stone" },
+  { name: "Success · verdant", cssVar: "--success", className: "bg-success" },
+  { name: "Info · shroud", cssVar: "--info", className: "bg-info" },
+  { name: "Warning · flame", cssVar: "--warning", className: "bg-warning" },
+  {
+    name: "Destructive · coals",
+    cssVar: "--destructive",
+    className: "bg-destructive",
+  },
   {
     name: "Chart 1–5",
     cssVar: "--chart-*",
-    className: "bg-linear-to-r from-chart-1 via-chart-3 to-chart-5",
+    className:
+      "bg-linear-to-r from-chart-1 via-chart-2 via-chart-3 via-chart-4 to-chart-5",
   },
 ];
 
@@ -238,7 +245,7 @@ const DesignSystem = () => {
     <>
       <PageHeader
         title="Design System"
-        description="Every shadcn component, themed for Embervale (light) and the Shroud (dark)."
+        description="Every shadcn component, themed dark-first for the void between the spires, with a sunlit parchment light theme."
         actions={
           <Button
             variant="outline"
@@ -259,7 +266,7 @@ const DesignSystem = () => {
       <Section
         anchor="colors"
         title="Colour tokens"
-        description="Semantic tokens consumed by every component. Brand tokens are additive and available as Tailwind colours."
+        description="Semantic tokens consumed by every component. Brand and status tokens are Tailwind colours too (bg-ember, text-shroud, border-success/40…)."
       >
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
           {TOKENS.map((t) => (
@@ -267,7 +274,7 @@ const DesignSystem = () => {
           ))}
         </div>
         <Separator />
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 lg:grid-cols-9">
           {BRAND_TOKENS.map((t) => (
             <Swatch key={t.cssVar} {...t} />
           ))}
@@ -277,24 +284,27 @@ const DesignSystem = () => {
       <Section
         anchor="typography"
         title="Typography"
-        description="Cinzel for display text, Inter for UI, JetBrains Mono for logs and code."
+        description="Cinzel for headings and titles, Barlow for UI, JetBrains Mono for logs and code."
       >
         <Card>
           <CardContent className="space-y-4">
-            <p className="font-display text-4xl font-bold tracking-[0.1em] text-flame-gradient">
-              Embervale
+            <p className="font-display text-4xl font-bold tracking-[0.12em]">
+              ENSHROUDED
             </p>
-            <p className="font-display text-xl tracking-[0.15em] uppercase">
+            <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+              Server Manager · Embervale
+            </p>
+            <p className="font-display text-xl font-semibold tracking-[0.03em]">
               Flame Altar · Revelwood
             </p>
             <p className="text-base">
-              Body text uses Inter. The quick brown fox jumps over the lazy dog
+              Body text uses Barlow. The quick brown fox jumps over the lazy dog
               while the Shroud creeps across the valley.
             </p>
             <p className="text-sm text-muted-foreground">
               Muted supporting text for descriptions and metadata.
             </p>
-            <pre className="rounded-md bg-muted p-3 font-mono text-xs">
+            <pre className="rounded-lg border bg-console p-3 font-mono text-xs">
               {
                 "[21:42:08] INFO  Thalia placed a Flame Altar in Revelwood\n[21:40:51] WARN  Ilyra ping exceeded 100 ms"
               }
@@ -306,7 +316,7 @@ const DesignSystem = () => {
       <Section
         anchor="buttons"
         title="Buttons"
-        description="Variants, sizes, icon buttons and groups."
+        description="Gold is the affirmative action and nothing else. If two gold buttons appear on one screen, one of them is wrong."
       >
         <Card>
           <CardContent className="space-y-4">
@@ -317,9 +327,9 @@ const DesignSystem = () => {
               <Button variant="ghost">Ghost</Button>
               <Button variant="destructive">Destructive</Button>
               <Button variant="link">Link</Button>
-              <Button className="shadow-glow-flame">
+              <Button className="shadow-ember">
                 <FlameIcon data-icon="inline-start" />
-                Light the Flame
+                With ember glow
               </Button>
               <Button disabled>
                 <Spinner data-icon="inline-start" />
@@ -365,7 +375,7 @@ const DesignSystem = () => {
       <Section
         anchor="badges"
         title="Badges & status"
-        description="Status pills reuse the brand tokens."
+        description="Status colours are semantic, not brand: verdant for healthy, shroud for in transition, flame for warning, coals for failure."
       >
         <Card>
           <CardContent className="flex flex-wrap items-center gap-2">
@@ -374,34 +384,31 @@ const DesignSystem = () => {
             <Badge variant="outline">Outline</Badge>
             <Badge variant="destructive">Destructive</Badge>
             <Badge variant="ghost">Ghost</Badge>
-            <Badge
-              variant="outline"
-              className="border-success/40 bg-success/10 text-success"
-            >
-              <span className="size-1.5 rounded-full bg-success" />
-              Online
+          </CardContent>
+          <CardContent className="flex flex-wrap items-center gap-2">
+            <Badge variant="success">
+              <BadgeDot />
+              Running
             </Badge>
-            <Badge
-              variant="outline"
-              className="border-warning/40 bg-warning/10 text-warning"
-            >
-              Restarting
+            <Badge variant="neutral">
+              <BadgeDot />
+              Stopped
             </Badge>
-            <Badge
-              variant="outline"
-              className="border-ember/40 bg-ember/10 text-ember"
-            >
-              Offline
+            <Badge variant="info">
+              <BadgeDot pulse />
+              Starting
             </Badge>
-            <Badge
-              variant="outline"
-              className="border-shroud/40 bg-shroud/10 text-shroud"
-            >
-              Shrouded
+            <Badge variant="info">
+              <BadgeDot pulse />
+              Updating
             </Badge>
-            <Badge className="bg-flame text-flame-foreground">
-              <FlameIcon />
-              Flame
+            <Badge variant="warning">
+              <BadgeDot />
+              Needs attention
+            </Badge>
+            <Badge variant="error">
+              <BadgeDot />
+              Crashed
             </Badge>
             <KbdGroup>
               <Kbd>Ctrl</Kbd>
@@ -563,7 +570,7 @@ const DesignSystem = () => {
                     defaultValue={[50]}
                     max={200}
                     step={5}
-                    className="[&_[data-slot=slider-range]]:bg-shroud [&_[data-slot=slider-thumb]]:border-shroud"
+                    className="[&_[data-slot=slider-range]]:bg-shroud [&_[data-slot=slider-thumb]]:bg-shroud"
                   />
                 </Field>
               </FieldGroup>
@@ -591,14 +598,14 @@ const DesignSystem = () => {
                 disconnected.
               </AlertDescription>
             </Alert>
-            <Alert className="border-success/40 text-success *:data-[slot=alert-description]:text-success/80">
+            <Alert variant="success">
               <CheckIcon />
               <AlertTitle>Backup complete</AlertTitle>
               <AlertDescription>
                 World saved to backups/embervale-184.zip
               </AlertDescription>
             </Alert>
-            <Alert className="border-warning/40 text-warning *:data-[slot=alert-description]:text-warning/80">
+            <Alert variant="warning">
               <AlertTriangleIcon />
               <AlertTitle>High memory usage</AlertTitle>
               <AlertDescription>
@@ -625,17 +632,15 @@ const DesignSystem = () => {
                 </div>
                 <Progress value={progress} />
               </div>
-              <Progress
-                value={30}
-                className="[&>[data-slot=progress-indicator]]:bg-shroud"
-              />
-              <Progress
-                value={80}
-                className="[&>[data-slot=progress-indicator]]:bg-ember"
-              />
+              <Progress value={37} tone="shroud" />
+              <div className="grid grid-cols-3 gap-3">
+                <Progress value={100} tone="success" />
+                <Progress value={70} tone="warning" />
+                <Progress value={45} tone="destructive" />
+              </div>
               <div className="flex items-center gap-3">
                 <Spinner />
-                <Spinner className="size-6 text-flame" />
+                <Spinner className="size-6 text-ember" />
                 <span className="text-sm text-muted-foreground">
                   Waiting for the server…
                 </span>
@@ -695,8 +700,8 @@ const DesignSystem = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep it</AlertDialogCancel>
-                  <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90">
-                    Delete
+                  <AlertDialogAction variant="destructive">
+                    Delete permanently
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -717,7 +722,7 @@ const DesignSystem = () => {
                   <Item variant="outline">
                     <ItemMedia>
                       <Avatar>
-                        <AvatarFallback className="bg-flame/15 text-flame">
+                        <AvatarFallback className="bg-ember/15 text-ember">
                           T
                         </AvatarFallback>
                       </Avatar>
@@ -795,6 +800,58 @@ const DesignSystem = () => {
                 Press <Kbd>R</Kbd> to restart
               </TooltipContent>
             </Tooltip>
+          </CardContent>
+          <CardContent className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-sm text-muted-foreground">Toasts</span>
+            <ButtonGroup>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast("Backup scheduled", {
+                    description: "Embervale will be archived at 22:30.",
+                    action: { label: "Back up now", onClick: () => {} },
+                  })
+                }
+              >
+                Default
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => toast.success("SteamCMD downloaded")}
+              >
+                Success
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast.info("Restart queued", {
+                    description: "Players get a 60 second warning.",
+                  })
+                }
+              >
+                Info
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast.warning("Stop requested", {
+                    description: "Players will be warned.",
+                  })
+                }
+              >
+                Warning
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast.error("Couldn't reach Steam", {
+                    description: "Check your connection and try again.",
+                  })
+                }
+              >
+                Error
+              </Button>
+            </ButtonGroup>
           </CardContent>
         </Card>
       </Section>

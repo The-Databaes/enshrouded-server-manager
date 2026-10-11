@@ -50,8 +50,9 @@ type StepState = "done" | "active" | "failed" | "pending";
 
 const StepIcon = ({ state }: { state: StepState }) => {
   if (state === "done") return <CheckIcon className="size-3.5 text-success" />;
-  if (state === "failed") return <XIcon className="size-3.5 text-ember" />;
-  if (state === "active") return <Spinner className="size-3.5 text-flame" />;
+  if (state === "failed")
+    return <XIcon className="size-3.5 text-destructive" />;
+  if (state === "active") return <Spinner className="size-3.5 text-ember" />;
   return <CircleIcon className="size-3 text-muted-foreground/50" />;
 };
 
@@ -107,11 +108,14 @@ export const TaskProgress = ({
       <div className="space-y-1.5">
         <Progress
           value={percent ?? (running ? 100 : 0)}
+          tone={
+            task.phase === "failed"
+              ? "destructive"
+              : task.phase === "succeeded"
+                ? "success"
+                : "ember"
+          }
           className={cn(
-            task.phase === "failed" &&
-              "[&>[data-slot=progress-indicator]]:bg-ember",
-            task.phase === "succeeded" &&
-              "[&>[data-slot=progress-indicator]]:bg-success",
             running && percent === null && "animate-pulse opacity-60",
           )}
           aria-label="SteamCMD progress"

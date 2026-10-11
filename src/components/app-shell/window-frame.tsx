@@ -9,7 +9,7 @@ export const WindowFrame = ({ children }: { children: React.ReactNode }) => {
       <div
         id={APP_VIEWPORT_ID}
         data-scroll-restoration-id={APP_VIEWPORT_ID}
-        className="relative min-h-0 flex-1 overflow-y-auto"
+        className="atmosphere relative min-h-0 flex-1 overflow-y-auto"
       >
         {children}
       </div>

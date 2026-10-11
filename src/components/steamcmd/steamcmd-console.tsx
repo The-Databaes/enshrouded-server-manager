@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 
 /** Colour a line by what SteamCMD is telling us. */
 const lineClass = (line: string) => {
-  if (line.startsWith("> ")) return "text-flame";
+  if (line.startsWith("> ")) return "text-ember";
   if (/^(error!|failed|steamcmd exited with code [1-9])/i.test(line))
-    return "text-ember";
+    return "text-destructive";
   if (line.startsWith("Success!")) return "text-success";
-  if (/progress: |^\[\s*\d+%\]/.test(line)) return "text-shroud";
+  if (/progress: |^\[\s*\d+%\]/.test(line)) return "text-info";
   return undefined;
 };
 
@@ -60,26 +60,26 @@ export const SteamCmdConsole = ({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-300",
+        "overflow-hidden rounded-lg border bg-console text-foreground/85",
         className,
       )}
     >
-      <div className="flex items-center gap-2 border-b border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs">
-        <TerminalIcon className="size-3.5 text-zinc-500" />
-        <span className="font-medium text-zinc-300">SteamCMD console</span>
+      <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-1.5 text-xs">
+        <TerminalIcon className="size-3.5 text-muted-foreground" />
+        <span className="font-semibold text-foreground">SteamCMD console</span>
         {running ? (
           <span className="flex items-center gap-1.5 text-success">
             <span className="size-1.5 animate-pulse rounded-full bg-success" />
             live
           </span>
         ) : null}
-        <span className="ml-auto text-zinc-500 tabular-nums">
+        <span className="ml-auto text-muted-foreground tabular-nums">
           {lineCount} {lineCount === 1 ? "line" : "lines"}
         </span>
         <Button
           variant="ghost"
           size="icon"
-          className="size-6 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+          className="size-6 text-muted-foreground"
           aria-label="Copy console output"
           onClick={() => void copy()}
           disabled={!lineCount}
@@ -94,7 +94,7 @@ export const SteamCmdConsole = ({
           role="log"
           aria-live="off"
           aria-label="SteamCMD console output"
-          className="h-72 overflow-y-auto px-3 py-2 font-mono text-[0.7rem] leading-relaxed"
+          className="h-72 overflow-y-auto px-4 py-3 font-mono text-[0.72rem] leading-relaxed"
         >
           {lineCount || partial ? (
             lines.map((line, i) => (
@@ -108,7 +108,7 @@ export const SteamCmdConsole = ({
               </div>
             ))
           ) : (
-            <p className="text-zinc-500">Waiting for SteamCMD…</p>
+            <p className="text-muted-foreground">Waiting for SteamCMD…</p>
           )}
           {partial || running ? (
             <div className="break-all whitespace-pre-wrap">
@@ -116,7 +116,7 @@ export const SteamCmdConsole = ({
               {running ? (
                 <span
                   aria-hidden="true"
-                  className="ml-px inline-block h-3 w-1.5 translate-y-0.5 animate-pulse bg-zinc-400"
+                  className="ml-px inline-block h-3 w-1.5 translate-y-0.5 animate-pulse bg-muted-foreground"
                 />
               ) : null}
             </div>
@@ -126,7 +126,7 @@ export const SteamCmdConsole = ({
           <Button
             size="sm"
             variant="secondary"
-            className="absolute right-3 bottom-3 h-7 shadow-md"
+            className="absolute right-3 bottom-3 shadow-shroud"
             onClick={() => setFollow(true)}
           >
             <ArrowDownIcon data-icon="inline-start" />

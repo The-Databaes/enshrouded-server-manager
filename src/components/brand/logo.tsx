@@ -27,8 +27,8 @@ export const LogoMark = ({
     >
       <defs>
         <linearGradient id={`${uid}-tile`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1b2338" />
-          <stop offset="1" stopColor="#0b101c" />
+          <stop offset="0" stopColor="#2a1f4a" />
+          <stop offset="1" stopColor="#0c0916" />
         </linearGradient>
         <linearGradient id={`${uid}-flame-outer`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffe08a" />
@@ -72,8 +72,8 @@ export const LogoMark = ({
               cy="900"
               rx="380"
               ry="150"
-              fill="#2fc7b8"
-              opacity="0.55"
+              fill="#a97be8"
+              opacity="0.5"
               filter={`url(#${uid}-mist)`}
             />
             <ellipse
@@ -81,7 +81,7 @@ export const LogoMark = ({
               cy="940"
               rx="400"
               ry="150"
-              fill="#1fb3c4"
+              fill="#7b4fd1"
               opacity="0.45"
               filter={`url(#${uid}-mist)`}
             />
@@ -90,8 +90,8 @@ export const LogoMark = ({
               cy="1010"
               rx="560"
               ry="150"
-              fill="#6d5bd0"
-              opacity="0.35"
+              fill="#33255a"
+              opacity="0.6"
               filter={`url(#${uid}-mist)`}
             />
             <circle cx="512" cy="560" r="330" fill={`url(#${uid}-glow)`} />
@@ -130,13 +130,13 @@ type LogoProps = React.ComponentProps<"div"> & {
 export const Logo = ({ compact = false, className, ...props }: LogoProps) => {
   return (
     <div className={cn("flex items-center gap-2.5", className)} {...props}>
-      <LogoMark tile className="size-8 rounded-md shadow-glow-flame" />
+      <LogoMark tile className="size-8 rounded-md shadow-ember" />
       {compact ? null : (
         <div className="flex min-w-0 flex-col leading-none">
-          <span className="truncate font-display text-[0.95rem] font-bold tracking-[0.12em] text-flame-gradient">
+          <span className="truncate font-display text-[0.9rem] font-bold tracking-[0.1em] text-foreground">
             ENSHROUDED
           </span>
-          <span className="truncate text-[0.62rem] font-medium tracking-[0.24em] text-shroud uppercase">
+          <span className="mt-0.5 truncate text-[0.66rem] font-medium tracking-[0.08em] text-muted-foreground">
             Server Manager
           </span>
         </div>
@@ -156,19 +156,19 @@ export const BrandBanner = ({
   return (
     <div
       className={cn(
-        "relative isolate overflow-hidden rounded-xl border bg-shroud-mist px-6 py-8 sm:px-10",
+        "shroud-mist relative isolate overflow-hidden rounded-xl border px-6 py-8 shadow-stone sm:px-10",
         className,
       )}
       {...props}
     >
       <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-        <LogoMark className="size-28 animate-flicker drop-shadow-[0_0_28px_oklch(0.8_0.16_70/0.45)]" />
+        <LogoMark className="size-28 animate-flicker drop-shadow-[0_0_28px_color-mix(in_oklch,var(--ember)_45%,transparent)]" />
         <div className="space-y-2">
-          <h1 className="font-display text-4xl font-bold tracking-[0.1em] text-flame-gradient sm:text-5xl">
+          <h1 className="text-4xl font-bold tracking-[0.12em] sm:text-5xl">
             ENSHROUDED
           </h1>
-          <div className="rule-gold w-56" />
-          <p className="font-display text-sm font-medium tracking-[0.35em] text-shroud uppercase">
+          <div className="rule-ember w-56" />
+          <p className="text-xs font-semibold tracking-[0.22em] text-shroud uppercase">
             Server Manager
           </p>
           <p className="max-w-md text-sm text-muted-foreground">

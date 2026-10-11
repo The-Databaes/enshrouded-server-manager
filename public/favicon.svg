@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1b2338"/>
-      <stop offset="1" stop-color="#0b101c"/>
+      <stop offset="0" stop-color="#2a1f4a"/>
+      <stop offset="1" stop-color="#0c0916"/>
     </linearGradient>
     <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffe08a"/>
@@ -39,10 +39,10 @@
 
   <g clip-path="url(#tileClip)">
     <!-- The Shroud: toxic teal mist creeping in from below -->
-    <ellipse cx="280" cy="900" rx="380" ry="150" fill="#2fc7b8" opacity="0.55" filter="url(#mist)"/>
-    <ellipse cx="780" cy="940" rx="400" ry="150" fill="#1fb3c4" opacity="0.45" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1010" rx="560" ry="150" fill="#6d5bd0" opacity="0.35" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1060" rx="640" ry="140" fill="#0b101c" opacity="0.5" filter="url(#mist)"/>
+    <ellipse cx="280" cy="900" rx="380" ry="150" fill="#a97be8" opacity="0.5" filter="url(#mist)"/>
+    <ellipse cx="780" cy="940" rx="400" ry="150" fill="#7b4fd1" opacity="0.45" filter="url(#mist)"/>
+    <ellipse cx="520" cy="1010" rx="560" ry="150" fill="#33255a" opacity="0.6" filter="url(#mist)"/>
+    <ellipse cx="520" cy="1060" rx="640" ry="140" fill="#0c0916" opacity="0.5" filter="url(#mist)"/>
 
     <!-- Ember glow behind the flame -->
     <circle cx="512" cy="560" r="330" fill="url(#emberGlow)"/>

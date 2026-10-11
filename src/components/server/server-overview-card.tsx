@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -75,26 +75,21 @@ const Row = ({
 const StatusBadge = ({ status }: { status: ServerStatus }) => {
   if (status.state === "incomplete")
     return (
-      <Badge variant="outline" className="border-ember/40 text-ember">
+      <Badge variant="warning">
+        <BadgeDot />
         Incomplete
       </Badge>
     );
   if (status.updateAvailable)
     return (
-      <Badge
-        variant="outline"
-        className="border-warning/40 bg-warning/10 text-warning"
-      >
-        <span className="size-1.5 rounded-full bg-warning" />
+      <Badge variant="warning">
+        <BadgeDot />
         Update available
       </Badge>
     );
   return (
-    <Badge
-      variant="outline"
-      className="border-success/40 bg-success/10 text-success"
-    >
-      <span className="size-1.5 rounded-full bg-success" />
+    <Badge variant="success">
+      <BadgeDot />
       {status.updateAvailable === false ? "Up to date" : "Installed"}
     </Badge>
   );
@@ -144,8 +139,8 @@ export const ServerOverviewCard = ({
 
       <CardContent className="space-y-5">
         {status.state === "incomplete" ? (
-          <Alert className="border-ember/40">
-            <TriangleAlertIcon className="text-ember" />
+          <Alert variant="warning">
+            <TriangleAlertIcon />
             <AlertTitle>The install didn't finish</AlertTitle>
             <AlertDescription>
               <p>
@@ -219,7 +214,7 @@ export const ServerOverviewCard = ({
       <CardFooter className="flex-wrap gap-2 border-t">
         <Button
           variant={status.updateAvailable ? "default" : "outline"}
-          className={status.updateAvailable ? "shadow-glow-flame" : undefined}
+          className={status.updateAvailable ? "shadow-ember" : undefined}
           disabled={busy || !installed}
           onClick={() => void server.update()}
         >

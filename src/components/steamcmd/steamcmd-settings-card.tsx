@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -104,11 +104,8 @@ export const SteamCmdSettingsCard = () => {
           Downloads and updates the Enshrouded dedicated server files.
         </CardDescription>
         <CardAction>
-          <Badge
-            variant="outline"
-            className="border-success/40 bg-success/10 text-success"
-          >
-            <span className="size-1.5 rounded-full bg-success" />
+          <Badge variant="success">
+            <BadgeDot />
             Ready
           </Badge>
         </CardAction>

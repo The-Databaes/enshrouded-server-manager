@@ -35,13 +35,17 @@ To run a real download test from Rust: `cargo test -- --ignored live_install --n
 The UI is built on [shadcn/ui](https://ui.shadcn.com/) (every component is installed under
 `src/components/ui`) with an Enshrouded-inspired theme defined in `src/styles.css`:
 
-- **Shroud** (dark, default): night-blue stone, the Flame's amber glow, teal/violet mist.
-- **Embervale** (light): parchment and warm stone with ember accents.
+- **Dark** (default): the violet void between the spires, ember-gold actions and shroud-violet
+  mist.
+- **Light**: sunlit parchment with the same gold and violet, darkened to hold text.
 
-Both themes are selectable from the header toggle (light / dark / system). Besides the standard
-shadcn tokens, brand colours are available as Tailwind utilities: `flame`, `ember`, `gold`,
-`shroud`, `success`, `warning`, `info` (e.g. `bg-flame`, `text-shroud`, `shadow-glow-flame`).
-Display text uses Cinzel (`font-display`), UI text uses Inter, logs use JetBrains Mono.
+Both themes are selectable from the header toggle (light / dark / system). Gold (`primary`) is the
+affirmative action and nothing else. Status colours are semantic: `success` (healthy), `info`
+(in transition), `warning` (needs attention) and `destructive` (failed), with matching `Badge`,
+`Alert` and `Progress` variants. Brand colours are Tailwind utilities too: `ember`, `shroud`,
+`firelight` and `stone` (e.g. `bg-ember`, `text-shroud`), plus the `shadow-stone`,
+`shadow-ember` and `shadow-shroud` elevations. Headings and titles use Cinzel, UI text uses
+Barlow, logs use JetBrains Mono.
 
 Open the **Design System** page inside the app to browse every component in both themes.
 

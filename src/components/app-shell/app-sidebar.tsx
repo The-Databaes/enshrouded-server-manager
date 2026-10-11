@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeDot } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -86,9 +86,7 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
       <SidebarContent>
         {NAV.map((group) => (
           <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="font-display tracking-[0.2em] uppercase">
-              {group.label}
-            </SidebarGroupLabel>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
@@ -102,7 +100,6 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
                         asChild
                         isActive={isActive}
                         tooltip={item.title}
-                        className="data-[active=true]:bg-ember-wash data-[active=true]:text-flame data-[active=true]:font-medium"
                       >
                         <Link to={item.to}>
                           <item.icon />
@@ -122,8 +119,8 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex items-center gap-2 rounded-md bg-ember-wash px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span className="relative flex size-6 shrink-0 items-center justify-center rounded-md bg-flame/15 text-flame">
+        <div className="flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/60 px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:px-0">
+          <span className="relative flex size-6 shrink-0 items-center justify-center rounded-md border border-ember/45 bg-linear-160 from-accent to-sidebar text-ember">
             <FlameIcon className="size-3.5 animate-flicker" />
           </span>
           <div className="min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
@@ -133,9 +130,10 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
             </p>
           </div>
           <Badge
-            variant="outline"
-            className="border-success/40 text-success group-data-[collapsible=icon]:hidden"
+            variant="success"
+            className="group-data-[collapsible=icon]:hidden"
           >
+            <BadgeDot />
             Online
           </Badge>
         </div>

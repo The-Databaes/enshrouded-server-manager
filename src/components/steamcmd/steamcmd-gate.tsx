@@ -8,8 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 
 const FullScreen = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex min-h-full flex-col items-center justify-center gap-4 bg-shroud-mist p-6 text-center">
-    <LogoMark tile className="size-14 rounded-xl shadow-glow-flame" />
+  <div className="shroud-mist flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center">
+    <LogoMark tile className="size-14 rounded-xl shadow-ember" />
     {children}
   </div>
 );
@@ -34,7 +34,7 @@ export const SteamCmdGate = ({ children }: { children: React.ReactNode }) => {
     return (
       <FullScreen>
         <div className="max-w-md space-y-1">
-          <p className="flex items-center justify-center gap-2 font-medium text-ember">
+          <p className="flex items-center justify-center gap-2 font-medium text-destructive">
             <TriangleAlertIcon className="size-4" />
             Couldn't read the app's settings
           </p>

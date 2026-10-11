@@ -9,7 +9,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
     // title bar; the wrapper fills the scroll area rather than the window.
     <SidebarProvider className="min-h-full">
       <AppSidebar className="top-(--titlebar-height) h-[calc(100svh-var(--titlebar-height))]" />
-      <SidebarInset className="min-w-0">
+      <SidebarInset className="min-w-0 bg-transparent">
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
           {children}
@@ -25,7 +25,7 @@ type PageHeaderProps = {
   actions?: React.ReactNode;
 };
 
-/** Consistent page title block (Cinzel heading, muted description, actions). */
+/** Consistent page title block (Cinzel heading, ember rule, muted description, actions). */
 export const PageHeader = ({
   title,
   description,
@@ -34,13 +34,11 @@ export const PageHeader = ({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-[0.08em] text-flame-gradient">
-          {title}
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-[0.06em]">{title}</h1>
         {description ? (
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}
-        <div className="rule-gold mt-2 w-32" />
+        <div className="rule-ember mt-2 w-40" />
       </div>
       {actions ? (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>
