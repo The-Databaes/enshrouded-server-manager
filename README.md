@@ -51,12 +51,25 @@ Open the **Design System** page inside the app to browse every component in both
 
 ### Brand assets
 
-Sources live in `assets/brand` (`icon.svg`, `banner.svg`). Regenerate all derived icons
-(Tauri bundle icons, favicons, PWA icons, `public/banner.png`) with:
+Sources live in `assets/brand`. One drawing can't serve both 16px and 1024px, so the icon
+comes in three variants, each used for the range where it reads:
+
+| Sizes  | Source            | Why                                                                   |
+| ------ | ----------------- | --------------------------------------------------------------------- |
+| 16–32  | `icon-micro.svg`  | Cropped in, no frame, brighter stone: a 1px gold ring is noise here   |
+| 40–48  | `icon-simple.svg` | Two bays, no masonry: finer detail merges into a smudge               |
+| 64+    | `icon.svg`        | Full detail                                                           |
+
+`banner.svg` embeds `icon.svg`. Regenerate everything derived from them (Tauri bundle
+icons incl. `.ico`/`.icns`, favicons, PWA icons, `public/banner.png`) with:
 
 ```sh
 pnpm assets
 ```
+
+Each size is rendered at 4x, downsampled with Lanczos, and sizes up to 64px get a light
+unsharp pass so the small icons keep their edges. In the app, `LogoMark` takes the same
+`variant` (`micro` / `simple` / `detailed`) for the size it's shown at.
 
 ---
 

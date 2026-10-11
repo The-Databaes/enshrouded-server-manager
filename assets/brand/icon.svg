@@ -1,65 +1,204 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    The Beacon, detailed variant (64px and up). A stone spire crowned by the
+    Flame, rising out of the Shroud; its three lit bays double as sliders.
+    Simplified siblings: icon-simple.svg (40–48px), icon-micro.svg (≤32px).
+  -->
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2a1f4a"/>
-      <stop offset="1" stop-color="#0c0916"/>
-    </linearGradient>
-    <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe08a"/>
-      <stop offset="0.45" stop-color="#f6a623"/>
-      <stop offset="1" stop-color="#d9442b"/>
-    </linearGradient>
-    <linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff8dc"/>
-      <stop offset="1" stop-color="#ffcf5c"/>
-    </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#b88420"/>
-      <stop offset="0.5" stop-color="#ffd977"/>
-      <stop offset="1" stop-color="#b88420"/>
-    </linearGradient>
-    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#ffb347" stop-opacity="0.75"/>
-      <stop offset="0.6" stop-color="#f6a623" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#f6a623" stop-opacity="0"/>
+    <radialGradient id="sky" cx="256" cy="174" r="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#332748"/>
+      <stop offset="0.55" stop-color="#191330"/>
+      <stop offset="1" stop-color="#0B0812"/>
     </radialGradient>
-    <filter id="mist" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="55"/>
-    </filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="18"/>
-    </filter>
-    <clipPath id="tileClip">
-      <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224"/>
+    <radialGradient id="cloud">
+      <stop offset="0" stop-color="#B78CF2" stop-opacity="0.62"/>
+      <stop offset="0.6" stop-color="#7B4FD1" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#5B32A8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="256" cy="146" r="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB74D" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#E8712A" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#E8712A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="172" y1="0" x2="340" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#241F30"/>
+      <stop offset="0.28" stop-color="#6A6478"/>
+      <stop offset="0.62" stop-color="#453F55"/>
+      <stop offset="1" stop-color="#1D1828"/>
+    </linearGradient>
+    <linearGradient id="crownLight" x1="0" y1="166" x2="0" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB74D" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFB74D" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="230" x2="0" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3A3"/>
+      <stop offset="0.48" stop-color="#E8A33D"/>
+      <stop offset="1" stop-color="#9C6018"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="78" x2="0" y2="194" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF6DC"/>
+      <stop offset="0.42" stop-color="#FFC65C"/>
+      <stop offset="1" stop-color="#E8712A"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="416" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1A1128" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0A0712" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="frame" x1="0" y1="12" x2="0" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3A3"/>
+      <stop offset="0.48" stop-color="#E8A33D"/>
+      <stop offset="1" stop-color="#9C6018"/>
+    </linearGradient>
+
+    <filter id="b3" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="b4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="b5" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="b7" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="b9" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="b17" filterUnits="userSpaceOnUse" x="-100" y="-100" width="712" height="712"><feGaussianBlur stdDeviation="17"/></filter>
+
+    <clipPath id="tile"><rect width="512" height="512" rx="112" ry="112"/></clipPath>
+    <clipPath id="spire">
+      <path d="M194 176 H220 V200 H243 V170 H269 V200 H292 V176 H318 V200 H326 L320 222 L340 418 H172 L192 222 L186 200 H194 Z"/>
     </clipPath>
   </defs>
 
-  <!-- Tile -->
-  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#tile)"/>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
 
-  <g clip-path="url(#tileClip)">
-    <!-- The Shroud: toxic teal mist creeping in from below -->
-    <ellipse cx="280" cy="900" rx="380" ry="150" fill="#a97be8" opacity="0.5" filter="url(#mist)"/>
-    <ellipse cx="780" cy="940" rx="400" ry="150" fill="#7b4fd1" opacity="0.45" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1010" rx="560" ry="150" fill="#33255a" opacity="0.6" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1060" rx="640" ry="140" fill="#0c0916" opacity="0.5" filter="url(#mist)"/>
+    <!-- Stars -->
+    <g fill="#D9C8FF">
+      <circle cx="96" cy="112" r="1.2" opacity="0.45"/>
+      <circle cx="138" cy="70" r="0.9" opacity="0.35"/>
+      <circle cx="404" cy="92" r="1.2" opacity="0.4"/>
+      <circle cx="430" cy="168" r="0.9" opacity="0.3"/>
+      <circle cx="74" cy="208" r="0.9" opacity="0.3"/>
+    </g>
 
-    <!-- Ember glow behind the flame -->
-    <circle cx="512" cy="560" r="330" fill="url(#emberGlow)"/>
+    <!-- Distant haze, with ruined spires of the old world standing in it -->
+    <ellipse cx="256" cy="300" rx="200" ry="120" fill="url(#cloud)" opacity="0.35" filter="url(#b17)"/>
+    <g fill="#231A3C" opacity="0.85">
+      <path d="M82 350 L90 276 L96 270 L99 256 L104 270 L110 278 L118 350 Z"/>
+      <path d="M396 352 L404 290 L409 284 L412 272 L416 286 L421 292 L428 352 Z"/>
+    </g>
+    <circle cx="412" cy="268" r="7" fill="#FFB74D" opacity="0.45" filter="url(#b3)"/>
+    <circle cx="412" cy="268" r="1.7" fill="#FFE3A3"/>
+
+    <!-- The Flame's light -->
+    <g fill="#FFB74D" opacity="0.07" filter="url(#b4)">
+      <path d="M256 146 L40 40 L22 104 Z"/>
+      <path d="M256 146 L472 40 L490 104 Z"/>
+      <path d="M256 146 L150 0 L196 0 Z"/>
+      <path d="M256 146 L362 0 L316 0 Z"/>
+    </g>
+    <circle cx="256" cy="146" r="118" fill="url(#halo)"/>
+
+    <!-- Spire -->
+    <path d="M194 176 H220 V200 H243 V170 H269 V200 H292 V176 H318 V200 H326 L320 222 L340 418 H172 L192 222 L186 200 H194 Z" fill="url(#stone)"/>
+    <g clip-path="url(#spire)">
+      <rect x="160" y="160" width="200" height="140" fill="url(#crownLight)"/>
+      <!-- Masonry: courses, staggered joints, and a lit lip under each course -->
+      <g stroke="#0E0A18" stroke-opacity="0.38" stroke-width="2" fill="none">
+        <path d="M191 258 H321 M188 302 H324 M184 346 H328 M180 390 H332"/>
+      </g>
+      <g stroke="#0E0A18" stroke-opacity="0.28" stroke-width="1.5" fill="none">
+        <path d="M232 222 V236 M282 222 V236 M214 258 V280 M300 258 V280 M236 302 V324 M278 302 V324 M206 346 V390 M312 346 V390 M198 390 V418 M318 390 V418"/>
+      </g>
+      <g stroke="#8A83A0" stroke-opacity="0.14" stroke-width="1" fill="none">
+        <path d="M191 260 H321 M188 304 H324 M184 348 H328 M180 392 H332"/>
+      </g>
+    </g>
+    <!-- Lit and shadowed edges -->
+    <path d="M196 222 L207 222 L193 418 L172 418 Z" fill="#8A83A0" fill-opacity="0.35"/>
+    <path d="M305 222 L316 222 L340 418 L317 418 Z" fill="#0E0A18" fill-opacity="0.55"/>
+    <!-- Crown catches the Flame -->
+    <path d="M194 176 H220 M243 170 H269 M292 176 H318 M186 200 H194 M220 200 H243 M269 200 H292 M318 200 H326" fill="none" stroke="#FFD08A" stroke-opacity="0.55" stroke-width="1.5"/>
+    <path d="M192 222 H320" fill="none" stroke="#0E0A18" stroke-opacity="0.5" stroke-width="2"/>
+
+    <!-- Bays: the beacon's sliders -->
+    <g fill="#120C1E">
+      <rect x="209" y="236" width="94" height="15" rx="7"/>
+      <rect x="209" y="280" width="94" height="15" rx="7"/>
+      <rect x="207" y="324" width="98" height="15" rx="7"/>
+    </g>
+    <g fill="url(#gold)" filter="url(#b9)">
+      <rect x="214" y="240" width="70" height="7" rx="3.5"/>
+      <rect x="214" y="284" width="70" height="7" rx="3.5"/>
+      <rect x="212" y="328" width="74" height="7" rx="3.5"/>
+    </g>
+    <g fill="url(#gold)">
+      <rect x="214" y="240" width="70" height="7" rx="3.5"/>
+      <rect x="214" y="284" width="70" height="7" rx="3.5"/>
+      <rect x="212" y="328" width="74" height="7" rx="3.5"/>
+    </g>
+    <g fill="#FFF6DC" filter="url(#b3)">
+      <circle cx="294" cy="243.5" r="4"/>
+      <circle cx="294" cy="287.5" r="4"/>
+      <circle cx="296" cy="331.5" r="4"/>
+    </g>
+    <g fill="#FFF6DC">
+      <circle cx="294" cy="243.5" r="4"/>
+      <circle cx="294" cy="287.5" r="4"/>
+      <circle cx="296" cy="331.5" r="4"/>
+    </g>
+
+    <!-- Arched gate -->
+    <path d="M232 418 V388 A24 24 0 0 1 280 388 V418 Z" fill="#0C0816"/>
+    <path d="M244 418 V394 A12 12 0 0 1 268 394 V418 Z" fill="#E8A33D" fill-opacity="0.55" filter="url(#b7)"/>
+    <path d="M244 418 V394 A12 12 0 0 1 268 394 V418 Z" fill="#E8A33D" fill-opacity="0.5"/>
+
+    <!-- Crowning flame -->
+    <circle cx="256" cy="150" r="58" fill="#FF9A3C" opacity="0.22" filter="url(#b17)"/>
+    <path d="M256 78 C270 112 296 126 294 154 C294 179 277 194 256 194 C235 194 218 179 218 154 C216 126 242 112 256 78 Z" fill="url(#flame)" filter="url(#b9)"/>
+    <path d="M256 78 C270 112 296 126 294 154 C294 179 277 194 256 194 C235 194 218 179 218 154 C216 126 242 112 256 78 Z" fill="url(#flame)"/>
+    <path d="M256 118 C263 137 273 144 272 158 C272 171 265 178 256 178 C247 178 240 171 240 158 C239 144 249 137 256 118 Z" fill="#FFF6DC" fill-opacity="0.92" filter="url(#b4)"/>
+    <path d="M256 118 C263 137 273 144 272 158 C272 171 265 178 256 178 C247 178 240 171 240 158 C239 144 249 137 256 118 Z" fill="#FFF6DC" fill-opacity="0.92"/>
+    <path d="M256 140 C260 151 265 156 265 163 C265 169 261 173 256 173 C251 173 247 169 247 163 C247 156 252 151 256 140 Z" fill="#FFFFFF"/>
+
+    <!-- Shroud rolling over the base -->
+    <g filter="url(#b17)">
+      <ellipse cx="256" cy="430" rx="236" ry="56" fill="url(#cloud)"/>
+      <ellipse cx="140" cy="452" rx="150" ry="42" fill="url(#cloud)" opacity="0.85"/>
+      <ellipse cx="382" cy="444" rx="140" ry="38" fill="url(#cloud)" opacity="0.8"/>
+      <ellipse cx="256" cy="478" rx="260" ry="46" fill="#8E5BE0" fill-opacity="0.38"/>
+    </g>
+    <!-- Gate light spilling onto the mist -->
+    <ellipse cx="256" cy="420" rx="40" ry="10" fill="#E8A33D" opacity="0.4" filter="url(#b7)"/>
+    <!-- Wisps -->
+    <g fill="none" stroke="#D3B9FF" stroke-linecap="round" filter="url(#b5)">
+      <path d="M96 424 C130 408 158 434 192 420" stroke-width="5" stroke-opacity="0.45"/>
+      <path d="M312 412 C342 394 368 420 400 406" stroke-width="4" stroke-opacity="0.32"/>
+      <path d="M168 452 C216 438 252 464 298 450" stroke-width="4" stroke-opacity="0.25"/>
+      <path d="M196 408 C226 398 262 416 300 404" stroke-width="3" stroke-opacity="0.3"/>
+    </g>
+    <rect y="416" width="512" height="96" fill="url(#floor)"/>
+
+    <!-- Embers, and sparks rising off the Flame -->
+    <g fill="#FFCC80" filter="url(#b3)">
+      <circle cx="330" cy="196" r="3.4" opacity="0.9"/>
+      <circle cx="352" cy="268" r="2.6" opacity="0.7"/>
+      <circle cx="176" cy="230" r="3" opacity="0.8"/>
+      <circle cx="152" cy="322" r="2.2" opacity="0.6"/>
+      <circle cx="368" cy="352" r="2.8" opacity="0.65"/>
+      <circle cx="200" cy="150" r="2.4" opacity="0.7"/>
+      <circle cx="308" cy="118" r="2" opacity="0.55"/>
+    </g>
+    <g fill="#FFCC80">
+      <circle cx="330" cy="196" r="3.4" opacity="0.9"/>
+      <circle cx="352" cy="268" r="2.6" opacity="0.7"/>
+      <circle cx="176" cy="230" r="3" opacity="0.8"/>
+      <circle cx="152" cy="322" r="2.2" opacity="0.6"/>
+      <circle cx="368" cy="352" r="2.8" opacity="0.65"/>
+      <circle cx="200" cy="150" r="2.4" opacity="0.7"/>
+      <circle cx="308" cy="118" r="2" opacity="0.55"/>
+      <circle cx="263" cy="62" r="1.6" opacity="0.75"/>
+      <circle cx="249" cy="46" r="1.2" opacity="0.55"/>
+      <circle cx="266" cy="34" r="1" opacity="0.4"/>
+    </g>
   </g>
 
-  <!-- Altar ring -->
-  <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="url(#ring)" stroke-width="14" opacity="0.9"/>
-  <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="#ffd977" stroke-width="30" opacity="0.25" filter="url(#soft)"/>
-
-  <!-- The Flame -->
-  <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z"
-        fill="url(#flameOuter)"/>
-  <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z"
-        fill="none" stroke="#fff1bf" stroke-width="6" opacity="0.35"/>
-  <path d="M512 400 C530 470 612 512 612 608 C612 678 566 724 512 736 C458 724 412 678 412 608 C412 556 440 536 452 486 C458 528 484 544 496 524 C480 480 490 448 512 400 Z"
-        fill="url(#flameInner)"/>
-
-  <!-- Subtle tile edge -->
-  <rect x="6" y="6" width="1012" height="1012" rx="218" ry="218" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="12"/>
+  <!-- Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="98" ry="98" fill="none" stroke="url(#frame)" stroke-width="4"/>
+  <rect x="26.75" y="26.75" width="458.5" height="458.5" rx="87.25" ry="87.25" fill="none" stroke="#B78CF2" stroke-opacity="0.22" stroke-width="1.5"/>
+  <path d="M256 7 L263 14 L256 21 L249 14 Z" fill="#FFE3A3" stroke="#0B0812" stroke-width="2"/>
 </svg>

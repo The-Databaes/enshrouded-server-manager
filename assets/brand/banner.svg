@@ -1,75 +1,137 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" width="1600" height="500">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1600 480" width="1600" height="480">
+  <!--
+    README banner. The icon is referenced as `icon.svg`; `pnpm assets` inlines
+    it as a data URI so the rendered banner.png and public/banner.svg are
+    self-contained.
+  -->
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#2a1f4a"/>
-      <stop offset="1" stop-color="#090713"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1436"/>
+      <stop offset="1" stop-color="#0d0919"/>
     </linearGradient>
-    <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe08a"/>
-      <stop offset="0.45" stop-color="#f6a623"/>
-      <stop offset="1" stop-color="#d9442b"/>
-    </linearGradient>
-    <linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff8dc"/>
-      <stop offset="1" stop-color="#ffcf5c"/>
-    </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#b88420"/>
-      <stop offset="0.5" stop-color="#ffd977"/>
-      <stop offset="1" stop-color="#b88420"/>
-    </linearGradient>
-    <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff0c2"/>
-      <stop offset="0.5" stop-color="#f4c766"/>
-      <stop offset="1" stop-color="#c98a1f"/>
-    </linearGradient>
-    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#f4c766" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#f4c766" stop-opacity="0"/>
-    </linearGradient>
-    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#ffb347" stop-opacity="0.7"/>
-      <stop offset="0.6" stop-color="#f6a623" stop-opacity="0.16"/>
-      <stop offset="1" stop-color="#f6a623" stop-opacity="0"/>
+    <radialGradient id="haze" cx="1000" cy="210" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3d2a72" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#3d2a72" stop-opacity="0"/>
     </radialGradient>
-    <filter id="mist" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="48"/>
+    <radialGradient id="iconGlow" cx="256" cy="230" r="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9f40" stop-opacity="0.35"/>
+      <stop offset="0.5" stop-color="#9a4bd0" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#9a4bd0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="800" cy="220" r="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0.55" stop-color="#05030b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#05030b" stop-opacity="0.7"/>
+    </radialGradient>
+    <linearGradient id="goldText" x1="0" y1="118" x2="0" y2="238" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff3cf"/>
+      <stop offset="0.4" stop-color="#f7c55c"/>
+      <stop offset="0.75" stop-color="#e09430"/>
+      <stop offset="1" stop-color="#b86a1e"/>
+    </linearGradient>
+    <linearGradient id="hairline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e09430" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f7c55c"/>
+      <stop offset="1" stop-color="#e09430" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ruleLeft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7c55c" stop-opacity="0"/>
+      <stop offset="1" stop-color="#f7c55c"/>
+    </linearGradient>
+    <linearGradient id="ruleRight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7c55c"/>
+      <stop offset="1" stop-color="#f7c55c" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="blur6" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blur14" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="blur30" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+    <filter id="spark" filterUnits="userSpaceOnUse" x="0" y="0" width="1600" height="480">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8"/>
+    <filter id="iconShadow" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="480">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#05030b" flood-opacity="0.75"/>
     </filter>
+
     <clipPath id="frame">
-      <rect x="0" y="0" width="1600" height="500" rx="28" ry="28"/>
+      <rect width="1600" height="480" rx="24" ry="24"/>
     </clipPath>
   </defs>
 
-  <rect x="0" y="0" width="1600" height="500" rx="28" ry="28" fill="url(#bg)"/>
-
   <g clip-path="url(#frame)">
-    <!-- Shroud mist along the bottom and far right -->
-    <ellipse cx="260" cy="470" rx="420" ry="110" fill="#a97be8" opacity="0.45" filter="url(#mist)"/>
-    <ellipse cx="900" cy="520" rx="520" ry="120" fill="#7b4fd1" opacity="0.35" filter="url(#mist)"/>
-    <ellipse cx="1450" cy="430" rx="380" ry="160" fill="#33255a" opacity="0.6" filter="url(#mist)"/>
-    <ellipse cx="800" cy="580" rx="900" ry="120" fill="#090713" opacity="0.6" filter="url(#mist)"/>
+    <rect width="1600" height="480" fill="url(#bg)"/>
+    <rect width="1600" height="480" fill="url(#haze)"/>
+    <rect width="1600" height="480" fill="url(#iconGlow)"/>
 
-    <!-- Ember glow behind the mark -->
-    <circle cx="255" cy="250" r="230" fill="url(#emberGlow)"/>
+    <!-- Stars -->
+    <g fill="#d9c8ff">
+      <circle cx="548" cy="70" r="2" opacity="0.4"/>
+      <circle cx="690" cy="128" r="1.5" opacity="0.3"/>
+      <circle cx="1210" cy="58" r="2" opacity="0.45"/>
+      <circle cx="1398" cy="112" r="2.5" opacity="0.4"/>
+      <circle cx="1520" cy="64" r="1.5" opacity="0.35"/>
+      <circle cx="880" cy="44" r="1.5" opacity="0.3"/>
+      <circle cx="1490" cy="236" r="2" opacity="0.3"/>
+      <circle cx="80" cy="60" r="2" opacity="0.35"/>
+    </g>
+
+    <!-- Embervale: far ridges with distant beacons -->
+    <path d="M0 404 L90 362 L160 384 L250 330 L330 372 L420 350 L520 398 L640 368 L720 386 L820 336 L900 372 L1000 350 L1090 392 L1190 342 L1270 368 L1370 322 L1450 360 L1530 340 L1600 372 L1600 480 L0 480 Z" fill="#2a1f4e"/>
+    <path d="M1521 344 L1524 304 L1530 294 L1536 306 L1539 344 Z" fill="#2a1f4e"/>
+    <path d="M1365 324 L1368 280 L1374 268 L1380 282 L1383 324 Z" fill="#2a1f4e"/>
+    <circle cx="1530" cy="290" r="14" fill="#ffae52" opacity="0.35" filter="url(#blur6)"/>
+    <circle cx="1530" cy="290" r="3" fill="#ffd38a"/>
+    <circle cx="1374" cy="264" r="16" fill="#ffae52" opacity="0.4" filter="url(#blur6)"/>
+    <circle cx="1374" cy="264" r="3.5" fill="#ffd38a"/>
+    <ellipse cx="900" cy="402" rx="900" ry="34" fill="#6d4cba" opacity="0.4" filter="url(#blur30)"/>
+    <path d="M0 440 L120 418 L260 430 L400 412 L560 434 L720 420 L880 436 L1040 414 L1200 432 L1360 416 L1500 430 L1600 420 L1600 480 L0 480 Z" fill="#191231"/>
+
+    <!-- The Shroud -->
+    <ellipse cx="260" cy="470" rx="420" ry="60" fill="#9a6fe0" opacity="0.5" filter="url(#blur30)"/>
+    <ellipse cx="900" cy="486" rx="560" ry="60" fill="#7b4fd1" opacity="0.55" filter="url(#blur30)"/>
+    <ellipse cx="1430" cy="470" rx="380" ry="60" fill="#8a63d8" opacity="0.45" filter="url(#blur30)"/>
+    <ellipse cx="560" cy="436" rx="220" ry="10" fill="#c7a8f7" opacity="0.35" filter="url(#blur6)"/>
+    <ellipse cx="1180" cy="444" rx="260" ry="10" fill="#c7a8f7" opacity="0.3" filter="url(#blur6)"/>
+
+    <!-- Embers -->
+    <g filter="url(#spark)">
+      <circle cx="470" cy="96" r="4" fill="#ffc46b"/>
+      <circle cx="420" cy="368" r="3" fill="#ffb457" opacity="0.7"/>
+      <circle cx="610" cy="300" r="3" fill="#ffc46b" opacity="0.7"/>
+      <circle cx="1440" cy="180" r="3.5" fill="#ffd99a" opacity="0.8"/>
+      <circle cx="1180" cy="392" r="2.5" fill="#ffb457" opacity="0.6"/>
+      <circle cx="1310" cy="88" r="2.5" fill="#ffd99a" opacity="0.6"/>
+      <circle cx="730" cy="60" r="2.5" fill="#ffc46b" opacity="0.6"/>
+      <circle cx="140" cy="430" r="3" fill="#ffb457" opacity="0.6"/>
+    </g>
+
+    <rect width="1600" height="480" fill="url(#vignette)"/>
   </g>
 
-  <!-- Mark (same geometry as icon.svg, scaled) -->
-  <g transform="translate(80 52) scale(0.34)">
-    <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="url(#ring)" stroke-width="14" opacity="0.9"/>
-    <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="#ffd977" stroke-width="30" opacity="0.25" filter="url(#soft)"/>
-    <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z" fill="url(#flameOuter)"/>
-    <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z" fill="none" stroke="#fff1bf" stroke-width="6" opacity="0.35"/>
-    <path d="M512 400 C530 470 612 512 612 608 C612 678 566 724 512 736 C458 724 412 678 412 608 C412 556 440 536 452 486 C458 528 484 544 496 524 C480 480 490 448 512 400 Z" fill="url(#flameInner)"/>
+  <!-- Icon -->
+  <image x="96" y="70" width="320" height="320" href="icon.svg" xlink:href="icon.svg" filter="url(#iconShadow)"/>
+
+  <!-- Wordmark. resvg only renders Cinzel's default weight, so a stroke in
+       the same paint builds it up to bold. x is offset by half the letter
+       spacing, which text-anchor counts after the last letter too. -->
+  <g font-family="Cinzel" font-size="112" letter-spacing="12" text-anchor="middle" paint-order="stroke">
+    <text x="1006" y="226" fill="#ff9a3c" stroke="#ff9a3c" stroke-width="10" opacity="0.55" filter="url(#blur14)">ENSHROUDED</text>
+    <text x="1006" y="231" fill="#05030b" stroke="#05030b" stroke-width="4" opacity="0.65">ENSHROUDED</text>
+    <text x="1006" y="226" fill="url(#goldText)" stroke="url(#goldText)" stroke-width="3.5">ENSHROUDED</text>
   </g>
 
-  <!-- Wordmark -->
-  <text x="470" y="262" font-family="Cinzel" font-weight="700" font-size="124" letter-spacing="10" fill="url(#goldText)">ENSHROUDED</text>
-  <rect x="474" y="292" width="760" height="3" fill="url(#rule)"/>
-  <text x="474" y="356" font-family="Cinzel" font-weight="500" font-size="40" letter-spacing="18" fill="#a97be8">SERVER MANAGER</text>
-  <text x="474" y="412" font-family="Cinzel" font-weight="400" font-size="22" letter-spacing="4" fill="#9c8fbe">Keep the Flame burning across Embervale</text>
+  <!-- Divider -->
+  <rect x="700" y="276" width="280" height="2" fill="url(#ruleLeft)"/>
+  <rect x="1020" y="276" width="280" height="2" fill="url(#ruleRight)"/>
+  <path d="M1000 264 L1013 277 L1000 290 L987 277 Z" fill="#f7c55c"/>
+  <path d="M1000 270 L1007 277 L1000 284 L993 277 Z" fill="#fff3cf"/>
+  <circle cx="970" cy="277" r="3" fill="#f7c55c"/>
+  <circle cx="1030" cy="277" r="3" fill="#f7c55c"/>
 
-  <rect x="3" y="3" width="1594" height="494" rx="26" ry="26" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="4"/>
+  <text x="1010" y="340" font-family="Cinzel" font-size="34" letter-spacing="20" text-anchor="middle" fill="#c9b6f2" stroke="#c9b6f2" stroke-width="0.8">SERVER MANAGER</text>
+
+  <!-- Gilded edges -->
+  <rect x="0" y="0" width="1600" height="3" fill="url(#hairline)"/>
+  <rect x="0" y="477" width="1600" height="3" fill="url(#hairline)"/>
+  <rect x="1.5" y="1.5" width="1597" height="477" rx="23" ry="23" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="3"/>
 </svg>

@@ -1,65 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    The Beacon for 32px and below: icon-simple.svg with brighter stone, no
+    frame, and cropped in so the spire fills the tile. At this size a 1px gold
+    ring is noise, and margin is wasted pixels.
+  -->
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2a1f4a"/>
-      <stop offset="1" stop-color="#0c0916"/>
-    </linearGradient>
-    <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe08a"/>
-      <stop offset="0.45" stop-color="#f6a623"/>
-      <stop offset="1" stop-color="#d9442b"/>
-    </linearGradient>
-    <linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff8dc"/>
-      <stop offset="1" stop-color="#ffcf5c"/>
-    </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#b88420"/>
-      <stop offset="0.5" stop-color="#ffd977"/>
-      <stop offset="1" stop-color="#b88420"/>
-    </linearGradient>
-    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#ffb347" stop-opacity="0.75"/>
-      <stop offset="0.6" stop-color="#f6a623" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#f6a623" stop-opacity="0"/>
+    <radialGradient id="sky" cx="256" cy="164" r="410" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A2C54"/>
+      <stop offset="0.6" stop-color="#181231"/>
+      <stop offset="1" stop-color="#0A0711"/>
     </radialGradient>
-    <filter id="mist" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="55"/>
-    </filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="18"/>
-    </filter>
-    <clipPath id="tileClip">
-      <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224"/>
-    </clipPath>
+    <linearGradient id="stone" x1="158" y1="0" x2="364" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#555060"/>
+      <stop offset="0.35" stop-color="#8F899E"/>
+      <stop offset="1" stop-color="#4F4B5A"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="260" x2="0" y2="348" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3A3"/>
+      <stop offset="1" stop-color="#E29A2E"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="54" x2="0" y2="198" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF6DC"/>
+      <stop offset="0.45" stop-color="#FFC65C"/>
+      <stop offset="1" stop-color="#E8712A"/>
+    </linearGradient>
+    <radialGradient id="mist">
+      <stop offset="0" stop-color="#C09BFF" stop-opacity="0.85"/>
+      <stop offset="0.6" stop-color="#8E5BE0" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#6A3CBD" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="b14" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="b20" filterUnits="userSpaceOnUse" x="-100" y="300" width="712" height="312"><feGaussianBlur stdDeviation="20"/></filter>
+    <clipPath id="tile"><rect width="512" height="512" rx="112" ry="112"/></clipPath>
   </defs>
 
-  <!-- Tile -->
-  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#tile)"/>
+  <g clip-path="url(#tile)">
+    <!-- The 400px square at (56, 37) of the simple drawing, scaled to fill. -->
+    <g transform="scale(1.28) translate(-56 -37)">
+      <rect x="-100" y="-100" width="712" height="712" fill="url(#sky)"/>
 
-  <g clip-path="url(#tileClip)">
-    <!-- The Shroud: toxic teal mist creeping in from below -->
-    <ellipse cx="280" cy="900" rx="380" ry="150" fill="#a97be8" opacity="0.5" filter="url(#mist)"/>
-    <ellipse cx="780" cy="940" rx="400" ry="150" fill="#7b4fd1" opacity="0.45" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1010" rx="560" ry="150" fill="#33255a" opacity="0.6" filter="url(#mist)"/>
-    <ellipse cx="520" cy="1060" rx="640" ry="140" fill="#0c0916" opacity="0.5" filter="url(#mist)"/>
+      <path d="M186 168 H220 V204 H239 V160 H273 V204 H292 V168 H326 V204 H334 L324 230 L354 420 H158 L188 230 L178 204 H186 Z" fill="url(#stone)"/>
+      <path d="M188 230 L204 230 L182 420 L158 420 Z" fill="#948CAB" fill-opacity="0.38"/>
 
-    <!-- Ember glow behind the flame -->
-    <circle cx="512" cy="560" r="330" fill="url(#emberGlow)"/>
+      <g fill="#0F0A1B">
+        <rect x="200" y="262" width="112" height="26" rx="13"/>
+        <rect x="195" y="320" width="122" height="26" rx="13"/>
+      </g>
+      <g fill="url(#gold)" filter="url(#b14)">
+        <rect x="208" y="270" width="96" height="10" rx="5"/>
+        <rect x="203" y="328" width="106" height="10" rx="5"/>
+      </g>
+      <g fill="url(#gold)">
+        <rect x="208" y="270" width="96" height="10" rx="5"/>
+        <rect x="203" y="328" width="106" height="10" rx="5"/>
+      </g>
+
+      <path d="M256 54 C274 96 306 112 303 148 C303 179 282 198 256 198 C230 198 209 179 209 148 C206 112 238 96 256 54 Z" fill="url(#flame)" filter="url(#b14)"/>
+      <path d="M256 54 C274 96 306 112 303 148 C303 179 282 198 256 198 C230 198 209 179 209 148 C206 112 238 96 256 54 Z" fill="url(#flame)"/>
+      <path d="M256 106 C265 129 278 138 276 156 C276 172 267 181 256 181 C245 181 236 172 236 156 C234 138 247 129 256 106 Z" fill="#FFF9E8"/>
+
+      <g filter="url(#b20)">
+        <ellipse cx="256" cy="428" rx="250" ry="62" fill="url(#mist)"/>
+        <ellipse cx="256" cy="474" rx="270" ry="54" fill="#8E5BE0" fill-opacity="0.55"/>
+      </g>
+    </g>
   </g>
-
-  <!-- Altar ring -->
-  <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="url(#ring)" stroke-width="14" opacity="0.9"/>
-  <ellipse cx="512" cy="796" rx="200" ry="42" fill="none" stroke="#ffd977" stroke-width="30" opacity="0.25" filter="url(#soft)"/>
-
-  <!-- The Flame -->
-  <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z"
-        fill="url(#flameOuter)"/>
-  <path d="M512 150 C548 262 704 352 704 548 C704 684 612 776 512 800 C412 776 320 684 320 548 C320 456 372 410 398 318 C410 390 450 428 474 402 C446 330 466 240 512 150 Z"
-        fill="none" stroke="#fff1bf" stroke-width="6" opacity="0.35"/>
-  <path d="M512 400 C530 470 612 512 612 608 C612 678 566 724 512 736 C458 724 412 678 412 608 C412 556 440 536 452 486 C458 528 484 544 496 524 C480 480 490 448 512 400 Z"
-        fill="url(#flameInner)"/>
-
-  <!-- Subtle tile edge -->
-  <rect x="6" y="6" width="1012" height="1012" rx="218" ry="218" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="12"/>
 </svg>

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    The Beacon, simplified for 40–48px: fatter shapes, two bays instead of
+    three, no masonry. See icon.svg for the detailed variant.
+  -->
+  <defs>
+    <radialGradient id="sky" cx="256" cy="164" r="410" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A2C54"/>
+      <stop offset="0.6" stop-color="#181231"/>
+      <stop offset="1" stop-color="#0A0711"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="158" y1="0" x2="364" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2A2438"/>
+      <stop offset="0.35" stop-color="#736C86"/>
+      <stop offset="1" stop-color="#231E31"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="260" x2="0" y2="348" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE3A3"/>
+      <stop offset="1" stop-color="#E29A2E"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="54" x2="0" y2="198" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF6DC"/>
+      <stop offset="0.45" stop-color="#FFC65C"/>
+      <stop offset="1" stop-color="#E8712A"/>
+    </linearGradient>
+    <radialGradient id="mist">
+      <stop offset="0" stop-color="#C09BFF" stop-opacity="0.85"/>
+      <stop offset="0.6" stop-color="#8E5BE0" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#6A3CBD" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="b14" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="b20" filterUnits="userSpaceOnUse" x="-100" y="300" width="712" height="312"><feGaussianBlur stdDeviation="20"/></filter>
+    <clipPath id="tile"><rect width="512" height="512" rx="112" ry="112"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+
+    <path d="M186 168 H220 V204 H239 V160 H273 V204 H292 V168 H326 V204 H334 L324 230 L354 420 H158 L188 230 L178 204 H186 Z" fill="url(#stone)"/>
+    <path d="M188 230 L204 230 L182 420 L158 420 Z" fill="#948CAB" fill-opacity="0.38"/>
+
+    <g fill="#0F0A1B">
+      <rect x="200" y="262" width="112" height="26" rx="13"/>
+      <rect x="195" y="320" width="122" height="26" rx="13"/>
+    </g>
+    <g fill="url(#gold)" filter="url(#b14)">
+      <rect x="208" y="270" width="96" height="10" rx="5"/>
+      <rect x="203" y="328" width="106" height="10" rx="5"/>
+    </g>
+    <g fill="url(#gold)">
+      <rect x="208" y="270" width="96" height="10" rx="5"/>
+      <rect x="203" y="328" width="106" height="10" rx="5"/>
+    </g>
+
+    <path d="M256 54 C274 96 306 112 303 148 C303 179 282 198 256 198 C230 198 209 179 209 148 C206 112 238 96 256 54 Z" fill="url(#flame)" filter="url(#b14)"/>
+    <path d="M256 54 C274 96 306 112 303 148 C303 179 282 198 256 198 C230 198 209 179 209 148 C206 112 238 96 256 54 Z" fill="url(#flame)"/>
+    <path d="M256 106 C265 129 278 138 276 156 C276 172 267 181 256 181 C245 181 236 172 236 156 C234 138 247 129 256 106 Z" fill="#FFF9E8"/>
+
+    <g filter="url(#b20)">
+      <ellipse cx="256" cy="428" rx="250" ry="62" fill="url(#mist)"/>
+      <ellipse cx="256" cy="474" rx="270" ry="54" fill="#8E5BE0" fill-opacity="0.55"/>
+    </g>
+  </g>
+
+  <rect x="18" y="18" width="476" height="476" rx="96" ry="96" fill="none" stroke="#E8A33D" stroke-opacity="0.55" stroke-width="8"/>
+</svg>

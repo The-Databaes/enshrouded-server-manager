@@ -104,7 +104,7 @@ export const TitleBar = () => {
           !focused && "opacity-50",
         )}
       >
-        <LogoMark tile className="size-4 rounded-[4px]" aria-hidden="true" />
+        <LogoMark variant="micro" alt="" className="size-4" />
         <span className="truncate text-xs text-muted-foreground">
           Enshrouded Server Manager
         </span>

@@ -9,7 +9,7 @@ import { useSteamCmd } from "@/hooks/use-steamcmd";
 
 const FullScreen = ({ children }: { children: React.ReactNode }) => (
   <div className="shroud-mist flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center">
-    <LogoMark tile className="size-14 rounded-xl shadow-ember" />
+    <LogoMark className="size-14 rounded-[12px] shadow-ember" />
     {children}
   </div>
 );

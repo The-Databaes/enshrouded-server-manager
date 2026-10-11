@@ -780,7 +780,7 @@ const DesignSystem = () => {
                 <Button variant="link">Hover card</Button>
               </HoverCardTrigger>
               <HoverCardContent className="flex items-center gap-3">
-                <LogoMark tile className="size-10 rounded-md" />
+                <LogoMark variant="simple" className="size-10" />
                 <div>
                   <p className="text-sm font-medium">
                     Enshrouded Server Manager

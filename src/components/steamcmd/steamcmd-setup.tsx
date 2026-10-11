@@ -47,7 +47,7 @@ export const SteamCmdSetup = ({
     <div className="shroud-mist flex min-h-full items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl space-y-6">
         <header className="flex flex-col items-center gap-4 text-center">
-          <LogoMark tile className="size-16 rounded-2xl shadow-ember" />
+          <LogoMark className="size-16 rounded-[14px] shadow-ember" />
           <div className="space-y-2">
             <Badge variant="outline" className="border-ember/40 text-ember">
               First-time setup
