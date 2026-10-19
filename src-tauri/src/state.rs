@@ -1,10 +1,11 @@
 use std::path::PathBuf;
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use tokio_util::sync::CancellationToken;
 
 use crate::config::ConfigStore;
 use crate::error::{Error, IoContext, Result};
+use crate::server::runtime::{Events, ServerRuntime};
 
 /// Name of the folder in the user's home directory that holds everything the
 /// app stores: `config.json`, the app-managed SteamCMD and (by default) the
@@ -16,16 +17,22 @@ pub struct AppState {
   /// `~/.enshrouded-server-manager` (see [`DATA_DIR_NAME`]).
   pub data_dir: PathBuf,
   pub config: ConfigStore,
+  /// SteamCMD jobs (its own updates, and installing/updating the server
+  /// files) run one at a time.
   pub steamcmd_job: JobSlot,
+  /// The dedicated server process, when it runs.
+  pub runtime: ServerRuntime,
 }
 
 impl AppState {
-  pub fn load(data_dir: PathBuf) -> Result<Self> {
+  /// `events` receives the running server's status and console output.
+  pub fn load(data_dir: PathBuf, events: Arc<dyn Events>) -> Result<Self> {
     std::fs::create_dir_all(&data_dir).at("create", &data_dir)?;
     Ok(Self {
       config: ConfigStore::load(&data_dir)?,
       data_dir,
       steamcmd_job: JobSlot::default(),
+      runtime: ServerRuntime::new(events),
     })
   }
 

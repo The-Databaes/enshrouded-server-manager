@@ -4,6 +4,9 @@ use serde::Serialize;
 use tauri::ipc::Channel;
 use tauri::State;
 
+use super::runtime::{LogLine, PlayerSample, RuntimeStatus};
+use super::settings::ServerSettings;
+use super::settings_file::{self, Change, SettingsDocument};
 use super::{app_update, latest_build, Manifest, APP_ID, SERVER_EXECUTABLE};
 use crate::config::ServerConfig;
 use crate::error::{Error, IoContext, Result};
@@ -40,6 +43,10 @@ pub struct ServerStatus {
   pub last_checked_at: Option<u64>,
   /// Known only after an update check.
   pub update_available: Option<bool>,
+  /// From the server's own settings file, once a folder is chosen.
+  pub settings: Option<ServerSettings>,
+  /// When the world was last written to disk (unix seconds).
+  pub last_saved_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -81,7 +88,14 @@ fn status(state: &AppState) -> ServerStatus {
     (Some(_), false) => InstallState::Incomplete,
   };
   let latest = server.as_ref().and_then(|s| s.latest_build_id.clone());
+  let settings = server
+    .as_ref()
+    .map(|s| ServerSettings::read(&s.install_dir));
   ServerStatus {
+    last_saved_at: settings
+      .as_ref()
+      .and_then(|s| newest_file_time(Path::new(&s.save_dir))),
+    settings,
     state: state_kind,
     app_id: APP_ID,
     install_dir: server.as_ref().map(|s| display(&s.install_dir)),
@@ -152,6 +166,18 @@ fn check_folder(state: &AppState, input: &str) -> FolderCheck {
   }
 }
 
+/// Modification time of the newest file directly in `dir` (unix seconds).
+fn newest_file_time(dir: &Path) -> Option<u64> {
+  std::fs::read_dir(dir)
+    .ok()?
+    .filter_map(|entry| entry.ok()?.metadata().ok())
+    .filter(std::fs::Metadata::is_file)
+    .filter_map(|meta| meta.modified().ok())
+    .max()
+    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+    .map(|d| d.as_secs())
+}
+
 /// Whether `path` is `dir` or somewhere inside it (case-insensitive on
 /// Windows).
 fn inside(path: &Path, dir: &Path) -> bool {
@@ -202,6 +228,7 @@ pub async fn server_install(
   on_event: Channel<SteamCmdEvent>,
 ) -> Result<ServerStatus> {
   let job = state.steamcmd_job.start()?;
+  state.runtime.ensure_stopped("its files can't be changed")?;
   let check = check_folder(&state, &path);
   if matches!(check.kind, FolderKind::Invalid) {
     return Err(Error::InvalidPath(check.message));
@@ -236,6 +263,7 @@ pub async fn server_update(
   on_event: Channel<SteamCmdEvent>,
 ) -> Result<ServerStatus> {
   let job = state.steamcmd_job.start()?;
+  state.runtime.ensure_stopped("it can't be updated")?;
   let (steamcmd, dir) = (configured_executable(&state)?, configured_dir(&state)?);
   app_update(&steamcmd, &dir, false, &job.token, &sender(&on_event)).await?;
   record_success(&state, false)?;
@@ -250,6 +278,9 @@ pub async fn server_verify(
   on_event: Channel<SteamCmdEvent>,
 ) -> Result<ServerStatus> {
   let job = state.steamcmd_job.start()?;
+  state
+    .runtime
+    .ensure_stopped("its files can't be verified")?;
   let (steamcmd, dir) = (configured_executable(&state)?, configured_dir(&state)?);
   app_update(&steamcmd, &dir, true, &job.token, &sender(&on_event)).await?;
   record_success(&state, true)?;
@@ -281,9 +312,120 @@ pub async fn server_check_update(
 #[tauri::command]
 pub fn server_forget(state: State<'_, AppState>) -> Result<ServerStatus> {
   let job = state.steamcmd_job.start()?;
+  state
+    .runtime
+    .ensure_stopped("the manager can't let go of it")?;
   state.config.update(|c| c.server = None)?;
   drop(job);
   Ok(status(&state))
+}
+
+// ---- running the server ------------------------------------------------
+
+/// The folder of a complete install, ready to run.
+fn runnable_dir(state: &AppState) -> Result<PathBuf> {
+  let dir = configured_dir(state)?;
+  match status(state).state {
+    InstallState::Installed => Ok(dir),
+    InstallState::Incomplete => Err(Error::Server(
+      "The server install isn't complete. Resume it on the Servers page first.".into(),
+    )),
+    InstallState::NotInstalled => Err(Error::Server("Install the server first.".into())),
+  }
+}
+
+/// Status of the server process. Also looks for a copy of the server
+/// running from the same folder outside the manager.
+#[tauri::command]
+pub async fn server_runtime_status(state: State<'_, AppState>) -> Result<RuntimeStatus> {
+  let dir = state.config.get().server.map(|s| s.install_dir);
+  Ok(state.runtime.status_checking_external(dir.as_deref()))
+}
+
+/// The console output kept from this session (newest last).
+#[tauri::command]
+pub fn server_log(state: State<'_, AppState>) -> Vec<LogLine> {
+  state.runtime.log_lines()
+}
+
+/// Players online, sampled each minute while the server ran.
+#[tauri::command]
+pub fn server_player_history(state: State<'_, AppState>) -> Vec<PlayerSample> {
+  state.runtime.player_history()
+}
+
+#[tauri::command]
+pub async fn server_start(state: State<'_, AppState>) -> Result<RuntimeStatus> {
+  start(&state)
+}
+
+fn start(state: &AppState) -> Result<RuntimeStatus> {
+  // Holding the SteamCMD slot while starting means an update can't begin
+  // between the checks and the server taking hold of its files.
+  let job = state.steamcmd_job.start().map_err(|e| match e {
+    Error::Busy => Error::Server("SteamCMD is busy. Start the server once it has finished.".into()),
+    e => e,
+  })?;
+  let dir = runnable_dir(state)?;
+  let status = state.runtime.start(&dir);
+  drop(job);
+  status
+}
+
+/// Ask the server to save and shut down.
+#[tauri::command]
+pub async fn server_stop(state: State<'_, AppState>) -> Result<RuntimeStatus> {
+  state.runtime.stop()
+}
+
+/// Close the server without letting it save.
+#[tauri::command]
+pub async fn server_kill(state: State<'_, AppState>) -> Result<RuntimeStatus> {
+  state.runtime.kill()
+}
+
+/// Stop the server (letting it save), then start it again.
+#[tauri::command]
+pub async fn server_restart(state: State<'_, AppState>) -> Result<RuntimeStatus> {
+  state.runtime.stop()?;
+  state.runtime.wait_stopped().await;
+  start(&state)
+}
+
+/// Force-close a server running from our folder that the manager didn't start.
+#[tauri::command]
+pub async fn server_kill_external(state: State<'_, AppState>, pid: u32) -> Result<RuntimeStatus> {
+  let dir = configured_dir(&state)?;
+  state.runtime.kill_external(pid, &dir)
+}
+
+// ---- the server's settings file ------------------------------------------
+
+#[tauri::command]
+pub async fn server_settings_get(state: State<'_, AppState>) -> Result<SettingsDocument> {
+  Ok(settings_file::read(&configured_dir(&state)?))
+}
+
+/// Save setting changes. The server reads its settings only when it starts,
+/// so with `restart` a running server is stopped first (letting it save
+/// its world), and started again once the file is written.
+#[tauri::command]
+pub async fn server_settings_save(
+  state: State<'_, AppState>,
+  changes: Vec<Change>,
+  restart: bool,
+) -> Result<SettingsDocument> {
+  let dir = configured_dir(&state)?;
+  let restart = restart && state.runtime.is_active();
+  if restart {
+    state.runtime.stop()?;
+    state.runtime.wait_stopped().await;
+  }
+  let saved = settings_file::save(&dir, &changes)?;
+  if restart {
+    start(&state)?;
+  }
+  Ok(saved)
 }
 
 /// After a successful `app_update` the install is, by definition, the latest

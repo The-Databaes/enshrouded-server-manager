@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ServerRuntimeProvider } from "@/components/server/server-runtime-provider";
 import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
 import type { ServerApi } from "@/lib/server/api";
 import type { ServerStatus } from "@/lib/server/types";
@@ -20,6 +21,8 @@ const notInstalled: ServerStatus = {
   latestBuildId: null,
   lastCheckedAt: null,
   updateAvailable: null,
+  settings: null,
+  lastSavedAt: null,
 };
 
 const installed: ServerStatus = {
@@ -36,6 +39,16 @@ const server = vi.hoisted(() => ({}) as Record<keyof ServerApi, unknown>);
 const steamcmd = vi.hoisted(() => ({}) as Record<keyof SteamCmdApi, unknown>);
 
 vi.mock("@/lib/server/api", () => ({ serverApi: () => server }));
+// A stopped server: none of these tests run it.
+vi.mock("@/lib/server/runtime-api", () => ({
+  runtimeApi: () => ({
+    status: async () => ({ revision: 1, phase: "stopped" }),
+    log: async () => [],
+    onStatus: async () => () => {},
+    onLog: async () => () => {},
+    onCloseRequested: async () => () => {},
+  }),
+}));
 vi.mock("@/lib/steamcmd/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/steamcmd/api")>();
   return { ...actual, steamcmdApi: () => steamcmd };
@@ -89,7 +102,9 @@ describe("Servers page", () => {
 
     render(
       <SteamCmdProvider>
-        <Servers />
+        <ServerRuntimeProvider>
+          <Servers />
+        </ServerRuntimeProvider>
       </SteamCmdProvider>,
     );
 
@@ -128,7 +143,9 @@ describe("Servers page", () => {
     });
     render(
       <SteamCmdProvider>
-        <Servers />
+        <ServerRuntimeProvider>
+          <Servers />
+        </ServerRuntimeProvider>
       </SteamCmdProvider>,
     );
     expect(

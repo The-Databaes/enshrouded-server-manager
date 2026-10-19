@@ -25,10 +25,90 @@ SteamCMD runs inside a pseudo-console (ConPTY) so its output streams live: with 
 buffers everything until it exits. Every job shows parsed progress (bytes, speed, %) plus the raw
 **live console**.
 
+## Running the server
+
+The **Dashboard** starts, stops and restarts the server and shows its live state: status, uptime,
+players, CPU and memory, a 24-hour player chart, the console and the server's own settings. The
+**Console** page has the full live output with a filter. The backend lives in
+`src-tauri/src/server/runtime.rs`. It is built only on things that don't change when Enshrouded
+updates:
+
+- **Running vs. stopped** comes from the process itself. The server runs in its own
+  pseudo-console (like SteamCMD), so its output streams live.
+- **Online** means it answers Valve's server query protocol (A2S, `server/a2s.rs`) on its query
+  port. The Steam game server library answers these, so player counts and readiness don't depend
+  on the wording of Enshrouded's log.
+- **Stopping** presses Ctrl+Break in the server's console, which makes it save the world and exit,
+  exactly as when an admin stops it by hand. Ctrl+C isn't used because a process can be started
+  with Ctrl+C disabled and pass that on to everything it launches; Ctrl+Break always gets through.
+  If it hasn't exited after 3 minutes it is force-closed, and the UI offers that sooner.
+- **Settings** for the dashboard are read from `enshrouded_server.json`. Only the fields the
+  manager needs are taken (name, ip, queryPort, slotCount, save/log folders). Anything missing
+  or unexpected falls back to the server's defaults.
+
+Closing the window while the server runs asks first, then stops the server (letting it save)
+before the app exits. Updating, verifying, moving or forgetting the server files is refused while
+it runs. Starting is refused while SteamCMD is busy, when its query port is taken, or when a copy
+of the server from the same folder is already running outside the manager. That copy can be
+force-closed from the Dashboard.
+
 Outside the Tauri window (`pnpm dev:vite`), these calls are answered by browser-only stand-ins
-(`src/lib/steamcmd/mock.ts`, `src/lib/server/mock.ts`). Seed them with
-`?mockSteamcmd=ready|external|missing` and `?mockServer=installed|update|incomplete`.
-To run a real download test from Rust: `cargo test -- --ignored live_install --nocapture`.
+(`src/lib/steamcmd/mock.ts`, `src/lib/server/mock.ts`, `src/lib/server/runtime-mock.ts`). Seed
+them with `?mockSteamcmd=ready|external|missing`, `?mockServer=installed|update|incomplete` and
+`?mockRuntime=running|starting|stopped|crashed|external` (and `?mockSettings=missing|invalid`
+for the settings editor).
+
+Tests against the real thing are opt-in (`--ignored`):
+
+- `cargo test -- --ignored live_install --nocapture` downloads the server.
+- `cargo test -- --ignored live_server_lifecycle --nocapture` runs it from `ESM_TEST_SERVER_DIR`.
+  It starts the server, checks that it answers, stops it and checks that it saved, restarts it,
+  then kills it and checks that this is reported as a crash. Point it at a copy, not a world you
+  care about. Give the copy an `enshrouded_server.json` with `"ip": "127.0.0.1"` so Windows
+  Firewall doesn't prompt.
+
+  A hard-linked copy saves 8 GB, but **only link the game files**. A linked file is the same file
+  in both folders, so anything written to it in the copy changes the original. Leave out
+  `enshrouded_server.json`, `savegame/` and `logs/`:
+
+  ```sh
+  mkdir test-server && cd server
+  find . -type f ! -path './savegame/*' ! -path './logs/*' ! -name 'enshrouded_server.json*' \
+    -exec cp --parents -l {} ../test-server/ \;
+  ```
+
+## Server settings
+
+The **Server Settings** page edits `enshrouded_server.json`:
+
+- **General:** name, player slots, server-list tags, text and voice chat, and (under Advanced)
+  the query port, listen address and save/log folders.
+- **World and difficulty:** the five presets, and all 37 world settings in the game's groups. Each
+  has a description, the range the server accepts, its default and a reset button. Factors show
+  as percentages, as in the game. Day, night and hunger times show in minutes and are written in
+  the nanoseconds the server expects.
+- **Roles and bans:** passwords (show, copy, generate), the five permissions and reserved slots
+  for each role, adding roles from the standard templates, and lifting bans.
+- **File:** exactly which changes will be written, and the resulting file.
+
+A few rules come from how the server behaves, checked against the current build and
+[Survival Servers' tested settings reference](https://www.survivalservers.com/wiki/Enshrouded_Server_Settings):
+
+- **Unless the preset is Custom, the server ignores every world setting** and plays the preset's
+  own values. The editor shows the preset's values and marks what the preset changes. Changing
+  any of them switches to Custom, carrying the preset's values over so nothing else moves.
+- **A misspelled word (preset, option or tag) stops the server**, so every choice is picked from
+  the server's own list. Numbers can't leave the range the server clamps to.
+- **Only changes are written.** The editor sends a list of changes (`src-tauri/src/server/
+  settings_file.rs`), which is applied to the file as it is on disk at save time. Settings a newer
+  server added, bans made in game since the page opened, and key order are all kept. The previous
+  file is kept as `enshrouded_server.json.bak`. Unknown world settings and permissions are shown
+  and kept.
+- **The server reads the file only when it starts**, and doesn't write it when it stops. With the
+  server running, the editor offers "Save and restart" (stop and save the world, write the file,
+  start) as well as "Save only" (applies at the next start).
+- A server that hasn't started yet has no file. The editor starts from the defaults the server
+  would write, including the four standard roles with random passwords, and can create it.
 
 ## Design system
 

@@ -15,10 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useServerRuntime } from "@/hooks/use-server-runtime";
 
 const TITLES: Record<string, string> = {
   "/": "Dashboard",
   "/servers": "Servers",
+  "/server-settings": "Server Settings",
   "/console": "Console",
   "/players": "Players",
   "/backups": "Backups",
@@ -29,6 +31,7 @@ const TITLES: Record<string, string> = {
 export const SiteHeader = () => {
   const { pathname } = useLocation();
   const title = TITLES[pathname] ?? "Enshrouded";
+  const serverName = useServerRuntime((s) => s.settings?.name ?? null);
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -41,7 +44,7 @@ export const SiteHeader = () => {
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
             <BreadcrumbLink asChild>
-              <Link to="/">Embervale</Link>
+              <Link to="/">{serverName ?? "Enshrouded"}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />

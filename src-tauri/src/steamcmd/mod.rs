@@ -14,6 +14,7 @@ use serde::Serialize;
 use tokio_util::sync::CancellationToken;
 
 use crate::error::Result;
+use crate::pty::Output;
 
 /// Progress updates streamed to the UI over a Tauri channel while SteamCMD
 /// (or its download) runs.
@@ -71,8 +72,8 @@ pub async fn run_streamed(
   });
   let code = process::run(exe, args, cancel, |out| {
     let line = match out {
-      process::Output::Line(line) => line,
-      process::Output::Partial(line) => {
+      Output::Line(line) => line,
+      Output::Partial(line) => {
         emit(SteamCmdEvent::Partial { line });
         return;
       }

@@ -1,7 +1,12 @@
-//! The Enshrouded dedicated server files: installing, updating and verifying
-//! them with SteamCMD. (Running and configuring the server comes later.)
+//! The Enshrouded dedicated server: installing, updating and verifying its
+//! files with SteamCMD, and running it ([`runtime`]).
 
+pub mod a2s;
 pub mod commands;
+mod processes;
+pub mod runtime;
+pub mod settings;
+pub mod settings_file;
 
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};

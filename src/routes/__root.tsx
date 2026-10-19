@@ -7,6 +7,7 @@ import {
 
 import { AppShell } from "@/components/app-shell/app-shell";
 import { WindowFrame } from "@/components/app-shell/window-frame";
+import { ServerRuntimeProvider } from "@/components/server/server-runtime-provider";
 import { SteamCmdGate } from "@/components/steamcmd/steamcmd-gate";
 import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -39,11 +40,13 @@ const RootComponent = () => {
   return (
     <WindowFrame>
       <SteamCmdProvider>
-        <SteamCmdGate>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-        </SteamCmdGate>
+        <ServerRuntimeProvider>
+          <SteamCmdGate>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          </SteamCmdGate>
+        </ServerRuntimeProvider>
       </SteamCmdProvider>
     </WindowFrame>
   );

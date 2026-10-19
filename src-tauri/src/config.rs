@@ -121,7 +121,7 @@ impl ConfigStore {
 }
 
 /// Write via a temp file + rename so a crash never leaves a truncated config.
-fn write_atomic(path: &Path, contents: &[u8]) -> Result<()> {
+pub(crate) fn write_atomic(path: &Path, contents: &[u8]) -> Result<()> {
   if let Some(dir) = path.parent() {
     fs::create_dir_all(dir).at("create", dir)?;
   }

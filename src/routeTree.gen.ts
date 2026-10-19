@@ -14,6 +14,7 @@ import { Route as BackupsRouteImport } from './routes/backups'
 import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as PlayersRouteImport } from './routes/players'
+import { Route as ServerSettingsRouteImport } from './routes/server-settings'
 import { Route as ServersRouteImport } from './routes/servers'
 import { Route as SettingsRouteImport } from './routes/settings'
 
@@ -42,6 +43,11 @@ const PlayersRoute = PlayersRouteImport.update({
   path: '/players',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServerSettingsRoute = ServerSettingsRouteImport.update({
+  id: '/server-settings',
+  path: '/server-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServersRoute = ServersRouteImport.update({
   id: '/servers',
   path: '/servers',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/console': typeof ConsoleRoute
   '/design-system': typeof DesignSystemRoute
   '/players': typeof PlayersRoute
+  '/server-settings': typeof ServerSettingsRoute
   '/servers': typeof ServersRoute
   '/settings': typeof SettingsRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/console': typeof ConsoleRoute
   '/design-system': typeof DesignSystemRoute
   '/players': typeof PlayersRoute
+  '/server-settings': typeof ServerSettingsRoute
   '/servers': typeof ServersRoute
   '/settings': typeof SettingsRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/console': typeof ConsoleRoute
   '/design-system': typeof DesignSystemRoute
   '/players': typeof PlayersRoute
+  '/server-settings': typeof ServerSettingsRoute
   '/servers': typeof ServersRoute
   '/settings': typeof SettingsRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/console'
     | '/design-system'
     | '/players'
+    | '/server-settings'
     | '/servers'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/console'
     | '/design-system'
     | '/players'
+    | '/server-settings'
     | '/servers'
     | '/settings'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/console'
     | '/design-system'
     | '/players'
+    | '/server-settings'
     | '/servers'
     | '/settings'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   ConsoleRoute: typeof ConsoleRoute
   DesignSystemRoute: typeof DesignSystemRoute
   PlayersRoute: typeof PlayersRoute
+  ServerSettingsRoute: typeof ServerSettingsRoute
   ServersRoute: typeof ServersRoute
   SettingsRoute: typeof SettingsRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/server-settings': {
+      id: '/server-settings'
+      path: '/server-settings'
+      fullPath: '/server-settings'
+      preLoaderRoute: typeof ServerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/servers': {
       id: '/servers'
       path: '/servers'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConsoleRoute: ConsoleRoute,
   DesignSystemRoute: DesignSystemRoute,
   PlayersRoute: PlayersRoute,
+  ServerSettingsRoute: ServerSettingsRoute,
   ServersRoute: ServersRoute,
   SettingsRoute: SettingsRoute,
 }

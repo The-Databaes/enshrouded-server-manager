@@ -33,6 +33,12 @@ pub enum Error {
   Unsupported(String),
   #[error("{0}")]
   SteamCmd(String),
+  /// Starting, stopping or talking to the server failed.
+  #[error("{0}")]
+  Server(String),
+  /// Not possible while the server is running (or because one already is).
+  #[error("{0}")]
+  ServerRunning(String),
 }
 
 impl Error {
@@ -48,6 +54,8 @@ impl Error {
       Self::Cancelled => "cancelled",
       Self::Unsupported(_) => "unsupported",
       Self::SteamCmd(_) => "steamcmd",
+      Self::Server(_) => "server",
+      Self::ServerRunning(_) => "serverRunning",
     }
   }
 }

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
+import { InfoIcon, RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/app-shell/app-shell";
 import { ServerActivityCard } from "@/components/server/server-activity-card";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useServer } from "@/hooks/use-server";
+import { useServerRuntime } from "@/hooks/use-server-runtime";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 
 const Servers = () => {
@@ -25,6 +26,9 @@ const Servers = () => {
   const busy = task?.phase === "running";
   const otherJobRunning =
     busy && (task.kind === "install" || task.kind === "update");
+  const serverRunning = useServerRuntime((s) =>
+    Boolean(s.status && s.status.phase !== "stopped"),
+  );
 
   return (
     <>
@@ -33,6 +37,16 @@ const Servers = () => {
         description="Install, update and verify the Enshrouded dedicated server with SteamCMD."
       />
       <div className="grid max-w-4xl gap-4">
+        {serverRunning ? (
+          <Alert variant="info">
+            <InfoIcon />
+            <AlertTitle>The server is running</AlertTitle>
+            <AlertDescription>
+              Its files can't be updated, verified or moved while it runs. Stop
+              it from the Dashboard first.
+            </AlertDescription>
+          </Alert>
+        ) : null}
         {otherJobRunning ? (
           <p className="text-sm text-muted-foreground">
             SteamCMD is busy updating itself; server actions will be available
@@ -78,7 +92,11 @@ const Servers = () => {
             </CardContent>
           </Card>
         ) : (
-          <ServerOverviewCard status={status} server={server} busy={busy} />
+          <ServerOverviewCard
+            status={status}
+            server={server}
+            busy={busy || serverRunning}
+          />
         )}
 
         <ServerActivityCard />

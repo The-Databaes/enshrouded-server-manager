@@ -79,6 +79,19 @@ const status = (): ServerStatus => {
     lastCheckedAt: server?.checkedAt ?? null,
     updateAvailable:
       installed && server?.latest ? server.build !== server.latest : null,
+    settings: server
+      ? {
+          file: installed ? "ok" : "missing",
+          problem: null,
+          name: "Embervale",
+          ip: "0.0.0.0",
+          queryPort: 15637,
+          slotCount: 16,
+          saveDir: `${server.dir}\\savegame`,
+          logDir: `${server.dir}\\logs`,
+        }
+      : null,
+    lastSavedAt: installed ? nowSecs() - 4 * 60 : null,
   };
 };
 
