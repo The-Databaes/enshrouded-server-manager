@@ -80,7 +80,7 @@ type ServerControlsProps = {
 /** Start / Stop / Restart for the server, reflecting its live state. */
 export const ServerControls = ({
   blockedReason = null,
-  size = "sm",
+  size = "default",
 }: ServerControlsProps) => {
   const status = useRuntimeStatus();
   const actions = useServerActions();
@@ -108,7 +108,7 @@ export const ServerControls = ({
     const start = (
       <Button
         size={size}
-        className="shadow-ember"
+        className="min-w-36"
         disabled={disabled}
         onClick={run("start", actions.start)}
       >
@@ -170,7 +170,8 @@ export const ServerControls = ({
   const stopButton = (
     <Button
       size={size}
-      variant="destructive"
+      variant="outline"
+      className="text-destructive hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
       disabled={pending !== null}
       onClick={confirmFirst ? undefined : run("stop", actions.stop)}
     >

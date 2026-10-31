@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SteamCmdGate } from "@/components/steamcmd/steamcmd-gate";
 import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { SteamCmdApi } from "@/lib/steamcmd/api";
 import type { SteamCmdStatus } from "@/lib/steamcmd/types";
 
@@ -26,11 +27,13 @@ vi.mock("@/lib/steamcmd/api", async (importOriginal) => {
 
 const renderGate = () =>
   render(
-    <SteamCmdProvider>
-      <SteamCmdGate>
-        <p>the app</p>
-      </SteamCmdGate>
-    </SteamCmdProvider>,
+    <TooltipProvider>
+      <SteamCmdProvider>
+        <SteamCmdGate>
+          <p>the app</p>
+        </SteamCmdGate>
+      </SteamCmdProvider>
+    </TooltipProvider>,
   );
 
 beforeEach(() => {
@@ -70,10 +73,14 @@ describe("SteamCmdGate", () => {
     const user = userEvent.setup();
     renderGate();
 
-    expect(await screen.findByText("SteamCMD is required")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Before the Flame is lit"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("the app")).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText(/I already have SteamCMD/));
+    await user.click(
+      screen.getByRole("radio", { name: /I already have SteamCMD/ }),
+    );
     const input = screen.getByLabelText("SteamCMD folder");
     const submit = screen.getByRole("button", { name: "Use this SteamCMD" });
 
@@ -90,8 +97,10 @@ describe("SteamCmdGate", () => {
 
     expect(api.adoptExisting).toHaveBeenCalledWith("C:\\steamcmd");
     // Success screen stays up until the user continues.
-    expect(await screen.findByText("SteamCMD is ready")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Enter the manager/ }));
+    expect(await screen.findByText("The path is clear")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /Continue to the server/ }),
+    );
     expect(screen.getByText("the app")).toBeInTheDocument();
   });
 

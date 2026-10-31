@@ -31,6 +31,11 @@
   --radius: 0.5rem;
   /* custom window title bar (see app-shell/title-bar.tsx) */
   --titlebar-height: 2rem;
+  /* the navigation rail (see app-shell/app-sidebar.tsx) */
+  --rail-width: 15rem;
+  --rail-width-collapsed: 4.25rem;
+  /* the height a page can fill below the title bar */
+  --page-height: calc(100svh - var(--titlebar-height));
 
   /* surfaces: sunlit parchment */
   --background: oklch(0.939 0.0189 83.06); /* #F1EADD */
@@ -85,6 +90,10 @@
   --ember: oklch(0.6389 0.1342 68.34); /* #C07A15 fire */
   --firelight: oklch(0.7988 0.1314 81.37); /* #E8B44F highlight */
   --stone: oklch(0.6204 0.0311 303.63); /* #8A8296 masonry */
+
+  /* gold leaf text: darker on parchment so it holds contrast */
+  --gild-from: var(--ember);
+  --gild-to: oklch(0.47 0.11 60);
 }
 
 .dark {
@@ -136,6 +145,9 @@
   --ember: oklch(0.7649 0.1399 72.95); /* #E8A33D */
   --firelight: oklch(0.9242 0.0867 87); /* #FFE3A3 */
   --stone: oklch(0.5159 0.0319 298.99); /* #6A6478 */
+
+  --gild-from: var(--firelight);
+  --gild-to: oklch(from var(--ember) calc(l - 0.04) c h);
 }
 
 @theme inline {
@@ -217,6 +229,86 @@
 
   --animate-flicker: flicker 2.6s ease-in-out infinite;
   --animate-pulse-shroud: pulse-shroud 2.4s ease-in-out infinite;
+  --animate-page-in: page-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-rise-in: rise-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-breathe: breathe 3.2s ease-in-out infinite;
+  --animate-ember-rise: ember-rise 3.4s ease-in infinite;
+  --animate-dock-in: dock-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  /* A page arriving: a short fade up, so navigation feels continuous. */
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Staggered entrance for hero content (delay set inline). */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* A highlight sweeping across a running progress bar. */
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+
+  /* Slow glow for things that are alive but calm (the lit beacon). */
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 0.75;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+  }
+
+  /* Sparks drifting up from the Flame. */
+  @keyframes ember-rise {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0) scale(1);
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--drift, 6px), -46px) scale(0.4);
+    }
+  }
+
+  /* The unsaved-changes dock sliding up. */
+  @keyframes dock-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 16px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
 
   @keyframes flicker {
     0%,
@@ -293,15 +385,33 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
+  /* Numbers that change in place shouldn't make the text around them jump. */
+  .tabular-nums,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 /* Branded, token-driven surfaces -------------------------------------- */
 
 /* The page field: shroud rising from below, condensed mist in the far
-   corner. Sits behind every screen. */
+   corner, and a fine grain so large dark areas don't band. Sits behind
+   every screen. */
 @utility atmosphere {
   background-color: var(--background);
   background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
     radial-gradient(
       120% 70% at 50% 100%,
       color-mix(in oklch, var(--shroud) 10%, transparent) 0%,
@@ -404,5 +514,94 @@
     to top,
     color-mix(in oklch, var(--shroud) 14%, transparent),
     transparent 45%
+  );
+}
+
+/* A neutral hairline that fades out at both ends: divides sections without
+   boxing them in. */
+@utility hairline {
+  height: 1px;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--border) 12%,
+    var(--border) 88%,
+    transparent
+  );
+}
+
+/* The same, fading only at the end (for rules that start at a heading). */
+@utility hairline-end {
+  height: 1px;
+  background-image: linear-gradient(to right, var(--border) 60%, transparent);
+}
+
+/* The glow behind the hero of a page, coloured by --glow (defaults to
+   ember). Needs a positioned parent. */
+@utility hero-glow {
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -40% -10% auto -10%;
+    height: 180%;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(
+        40% 55% at 12% 45%,
+        color-mix(in oklch, var(--glow, var(--ember)) 20%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        50% 60% at 70% 0%,
+        color-mix(in oklch, var(--shroud) 12%, transparent),
+        transparent 70%
+      );
+    /* Fade out on every side, so the glow never shows an edge. */
+    mask-image:
+      linear-gradient(to bottom, black 45%, transparent),
+      linear-gradient(to right, transparent, black 18%, black 82%, transparent);
+    mask-composite: intersect;
+  }
+}
+
+/* Floating surfaces (the save dock, the job chip): frosted stone. */
+@utility glass {
+  background-color: color-mix(in oklch, var(--popover) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 5%),
+    0 18px 40px -16px oklch(0 0 0 / 70%),
+    0 0 0 1px var(--border);
+}
+
+/* Text set in gold leaf: for the one big number or name on a page. */
+@utility text-gilded {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gild-from),
+    var(--gild-to)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Small caps label above a heading ("eyebrow"). */
+@utility eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* The gold of the primary button: lit from above. */
+@utility gold-sheen {
+  background-color: var(--primary);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--primary), white 14%),
+    var(--primary) 70%
   );
 }

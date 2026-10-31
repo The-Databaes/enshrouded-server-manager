@@ -1,18 +1,26 @@
+import { cn } from "cn";
 import { format } from "date-fns";
 import {
   CopyIcon,
+  CrownIcon,
   EyeIcon,
   EyeOffIcon,
+  KeyRoundIcon,
+  MoreHorizontalIcon,
   PlusIcon,
   RefreshCwIcon,
   ShieldBanIcon,
+  ShieldOffIcon,
   Trash2Icon,
   TriangleAlertIcon,
-  UserRoundCheckIcon,
+  UserRoundIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ListNotice } from "@/components/dashboard/online-players";
+import { Section } from "@/components/layout/page";
+import { PlayerAvatar } from "@/components/player-avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -23,17 +31,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,14 +41,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -91,13 +82,22 @@ const humanize = (key: string) =>
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/^./, (c) => c.toUpperCase());
 
-const PasswordField = ({
-  id,
+const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+/** Everything allowed reads as an admin; nothing as a visitor. */
+const roleIcon = (role: Role) => {
+  const granted = PERMISSIONS.filter((p) => role[p.key] === true).length;
+  if (granted === PERMISSIONS.length) return CrownIcon;
+  return UserRoundIcon;
+};
+
+const PasswordCell = ({
   value,
+  label,
   onChange,
 }: {
-  id: string;
   value: string;
+  label: string;
   onChange: (value: string) => void;
 }) => {
   const [shown, setShown] = useState(false);
@@ -109,209 +109,85 @@ const PasswordField = ({
       toast.error("Couldn't copy to the clipboard");
     }
   };
+  const iconButton =
+    "flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.08] hover:text-foreground disabled:opacity-40 [&_svg]:size-3.5";
   return (
-    <InputGroup>
-      <InputGroupInput
-        id={id}
+    <div className="flex h-8 items-center gap-0.5 rounded-lg border border-input bg-background/40 pr-1 pl-2.5 transition-shadow focus-within:border-ring focus-within:shadow-focus">
+      <input
         type={shown ? "text" : "password"}
+        size={1}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(e.target.value)}
         autoComplete="off"
         spellCheck={false}
-        className="font-mono"
+        placeholder="No password"
+        className="min-w-0 flex-1 bg-transparent font-mono text-xs outline-none placeholder:font-sans placeholder:text-muted-foreground/70"
       />
-      <InputGroupAddon align="inline-end">
-        <InputGroupButton
-          size="icon-xs"
-          aria-label={shown ? "Hide password" : "Show password"}
-          onClick={() => setShown((s) => !s)}
-        >
-          {shown ? <EyeOffIcon /> : <EyeIcon />}
-        </InputGroupButton>
-        <InputGroupButton
-          size="icon-xs"
-          aria-label="Copy password"
-          disabled={!value}
-          onClick={() => void copy()}
-        >
-          <CopyIcon />
-        </InputGroupButton>
-        <InputGroupButton
-          size="icon-xs"
-          aria-label="Generate a new password"
-          onClick={() => {
-            onChange(generatePassword());
-            setShown(true);
-          }}
-        >
-          <RefreshCwIcon />
-        </InputGroupButton>
-      </InputGroupAddon>
-    </InputGroup>
-  );
-};
-
-const RoleCard = ({
-  role,
-  index,
-  problems,
-  slotCount,
-  onChange,
-  onRemove,
-}: {
-  role: Role;
-  index: number;
-  problems: Problem[];
-  slotCount: number;
-  onChange: (patch: Record<string, unknown>) => void;
-  onRemove: () => void;
-}) => {
-  const name = typeof role.name === "string" ? role.name : "";
-  const password = typeof role.password === "string" ? role.password : "";
-  const reserved =
-    typeof role.reservedSlots === "number" ? role.reservedSlots : 0;
-  // Permissions a newer server added: shown as plain switches.
-  const extraPermissions = Object.keys(role).filter(
-    (k) => !KNOWN_ROLE_KEYS.has(k) && typeof role[k] === "boolean",
-  );
-  const id = `role-${index}`;
-
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserRoundCheckIcon className="size-4 text-shroud" />
-          {name.trim() || "Unnamed role"}
-        </CardTitle>
-        <CardAction>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 text-muted-foreground hover:text-destructive"
-                aria-label={`Remove role ${name}`}
-              >
-                <Trash2Icon className="size-3.5" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  Remove the {name || "unnamed"} role?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Its password stops working when the server next starts, so
-                  players who use it will need another role's password.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Keep it</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={onRemove}>
-                  Remove
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor={`${id}-name`}>Name</Label>
-            <Input
-              id={`${id}-name`}
-              value={name}
-              onChange={(e) => onChange({ name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor={`${id}-password`}>Password</Label>
-            <PasswordField
-              id={`${id}-password`}
-              value={password}
-              onChange={(v) => onChange({ password: v })}
-            />
-          </div>
-        </div>
-
-        {problems.length ? (
-          <ul className="space-y-1">
-            {problems.map((p) => (
-              <li
-                key={p.message}
-                className={
-                  p.blocking
-                    ? "text-xs text-destructive"
-                    : "text-xs text-warning"
-                }
-              >
-                {p.message}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {[
-            ...PERMISSIONS,
-            ...extraPermissions.map((key) => ({
-              key,
-              label: humanize(key),
-              description: "Added by a newer server version.",
-            })),
-          ].map((permission) => (
-            <div key={permission.key} className="flex items-start gap-3">
-              <Switch
-                id={`${id}-${permission.key}`}
-                checked={role[permission.key] === true}
-                onCheckedChange={(on) => onChange({ [permission.key]: on })}
-                className="mt-0.5"
-              />
-              <div className="space-y-0.5">
-                <Label
-                  htmlFor={`${id}-${permission.key}`}
-                  className="text-sm font-medium"
-                >
-                  {permission.label}
-                </Label>
-                <p className="text-xs text-pretty text-muted-foreground">
-                  {permission.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 border-t pt-3">
-          <Label htmlFor={`${id}-reserved`} className="text-sm font-medium">
-            Reserved slots
-          </Label>
-          <Input
-            id={`${id}-reserved`}
-            type="number"
-            min={0}
-            max={slotCount}
-            value={reserved}
-            onChange={(e) => {
-              const n = Number.parseInt(e.target.value, 10);
-              onChange({
-                reservedSlots: Number.isFinite(n)
-                  ? Math.min(SLOT_LIMIT, Math.max(0, n))
-                  : 0,
-              });
+      <button
+        type="button"
+        className={iconButton}
+        aria-label={shown ? "Hide password" : "Show password"}
+        onClick={() => setShown((s) => !s)}
+      >
+        {shown ? <EyeOffIcon /> : <EyeIcon />}
+      </button>
+      <button
+        type="button"
+        className={iconButton}
+        aria-label="Copy password"
+        disabled={!value}
+        onClick={() => void copy()}
+      >
+        <CopyIcon />
+      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className={iconButton}
+            aria-label="Generate a new password"
+            onClick={() => {
+              onChange(generatePassword());
+              setShown(true);
             }}
-            className="h-8 w-20 tabular-nums"
-          />
-          <p className="min-w-48 flex-1 text-xs text-muted-foreground">
-            Slots kept free for this role, so its players can join a busy
-            server.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+          >
+            <RefreshCwIcon />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>New random password</TooltipContent>
+      </Tooltip>
+    </div>
   );
 };
+
+/** The left column of the matrix: what a row means. */
+const RowHead = ({
+  label,
+  description,
+  icon: Icon,
+}: {
+  label: string;
+  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}) => (
+  <th
+    scope="row"
+    className="sticky left-0 z-[1] py-3.5 pr-6 text-left align-middle font-normal transition-colors group-data-scrolled/matrix:bg-background/95 group-data-scrolled/matrix:shadow-[10px_0_14px_-12px_oklch(0_0_0/70%)] group-data-scrolled/matrix:backdrop-blur-sm"
+  >
+    <p className="flex items-center gap-2 text-sm font-medium">
+      {Icon ? <Icon className="size-3.5 text-muted-foreground" /> : null}
+      {label}
+    </p>
+    {description ? (
+      <p className="mt-0.5 max-w-[13rem] text-[0.75rem] leading-snug text-pretty text-muted-foreground">
+        {description}
+      </p>
+    ) : null}
+  </th>
+);
+
+const CELL = "border-l border-border/45 px-3.5 py-3.5 align-middle";
 
 type RolesTabProps = {
   draft: SettingsDoc;
@@ -319,15 +195,15 @@ type RolesTabProps = {
   onChange: Update;
 };
 
-/** Roles (passwords and what each may do) and banned players. */
+/** Roles (passwords and what each may do) as one matrix, and bans. */
 export const RolesTab = ({ draft, problems, onChange }: RolesTabProps) => {
   const roles = roleEntries(draft);
   const bans = bansOf(draft);
-  const slotCount = typeof draft.slotCount === "number" ? draft.slotCount : 16;
+  const [removing, setRemoving] = useState<number | null>(null);
+  // The label column only needs a backdrop once the roles slide under it.
+  const [scrolled, setScrolled] = useState(false);
   const takenNames = new Set(
-    roles.map(({ role }) =>
-      typeof role.name === "string" ? role.name.toLowerCase() : "",
-    ),
+    roles.map(({ role }) => str(role.name).toLowerCase()),
   );
   const freeName = (base: string) => {
     let name = base;
@@ -336,156 +212,338 @@ export const RolesTab = ({ draft, problems, onChange }: RolesTabProps) => {
     return name;
   };
   const slotProblem = problems.find((p) => p.field === "userGroups");
+  const patch = (index: number, change: Record<string, unknown>) =>
+    onChange((doc) => updateRole(doc, index, change));
+  // Permissions a newer server added: shown as plain rows.
+  const extraPermissions = [
+    ...new Set(
+      roles.flatMap(({ role }) =>
+        Object.keys(role).filter(
+          (k) => !KNOWN_ROLE_KEYS.has(k) && typeof role[k] === "boolean",
+        ),
+      ),
+    ),
+  ];
+  const permissionRows = [
+    ...PERMISSIONS,
+    ...extraPermissions.map((key) => ({
+      key,
+      label: humanize(key),
+      description: "Added by a newer server version.",
+    })),
+  ];
+  const removingRole =
+    removing === null ? null : roles.find((r) => r.index === removing);
+
+  const addMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline">
+          <PlusIcon data-icon="inline-start" />
+          Add role
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel>Start from</DropdownMenuLabel>
+        {ROLE_TEMPLATES.map((template) => (
+          <DropdownMenuItem
+            key={template.name}
+            onSelect={() =>
+              onChange((doc) =>
+                addRole(
+                  doc,
+                  roleFromTemplate(template, freeName(template.name)),
+                ),
+              )
+            }
+            className="flex-col items-start gap-0"
+          >
+            <span className="font-medium">{template.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {template.description}
+            </span>
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() =>
+            onChange((doc) =>
+              addRole(
+                doc,
+                roleFromTemplate(
+                  ROLE_TEMPLATES[ROLE_TEMPLATES.length - 1],
+                  freeName("New role"),
+                ),
+              ),
+            )
+          }
+        >
+          Blank (no permissions)
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Roles</CardTitle>
-          <CardDescription className="text-pretty">
-            Players join by entering a role's password; the role decides what
-            they may do. Everyone can explore, fight and gather outside bases
-            (Visitors can't change the world).
-          </CardDescription>
-          <CardAction>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <PlusIcon data-icon="inline-start" />
-                  Add role
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Start from</DropdownMenuLabel>
-                {ROLE_TEMPLATES.map((template) => (
-                  <DropdownMenuItem
-                    key={template.name}
-                    onSelect={() =>
-                      onChange((doc) =>
-                        addRole(
-                          doc,
-                          roleFromTemplate(template, freeName(template.name)),
-                        ),
-                      )
-                    }
-                    className="flex-col items-start gap-0"
-                  >
-                    <span className="font-medium">{template.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {template.description}
-                    </span>
-                  </DropdownMenuItem>
+    <div className="space-y-14">
+      <Section
+        title="Roles"
+        description="Players join by entering a role's password; the role decides what they may do. Everyone can explore, fight and gather outside bases."
+        actions={addMenu}
+      >
+        {roles.length === 0 || slotProblem ? (
+          <Alert variant="warning" className="mb-5">
+            <TriangleAlertIcon />
+            <AlertDescription>
+              {roles.length === 0
+                ? 'There are no roles. The server creates a "Default" role with a random password when it starts.'
+                : slotProblem?.message}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {roles.length ? (
+          <div
+            data-scrolled={scrolled || undefined}
+            onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 0)}
+            className="group/matrix -mx-1 overflow-x-auto px-1 pb-2"
+          >
+            <table className="w-full min-w-max border-separate border-spacing-0">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 z-[1] w-[14rem] group-data-scrolled/matrix:bg-background/95 group-data-scrolled/matrix:backdrop-blur-sm" />
+                  {roles.map(({ role, index }) => {
+                    const Icon = roleIcon(role);
+                    const roleProblems = problems.filter(
+                      (p) => p.field === `role:${index}`,
+                    );
+                    return (
+                      <th
+                        key={index}
+                        scope="col"
+                        className="min-w-[11.5rem] border-b border-l border-border/45 px-3.5 pb-4 text-left align-bottom font-normal"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border bg-foreground/[0.03] text-shroud">
+                            <Icon className="size-3.5" />
+                          </span>
+                          <input
+                            size={1}
+                            value={str(role.name)}
+                            aria-label="Role name"
+                            placeholder="Unnamed role"
+                            onChange={(e) =>
+                              patch(index, { name: e.target.value })
+                            }
+                            className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 font-display text-[0.95rem] font-semibold tracking-[0.04em] outline-none transition-colors hover:border-border focus:border-ring focus:shadow-focus"
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                className="text-muted-foreground"
+                                aria-label={`More for ${str(role.name) || "this role"}`}
+                              >
+                                <MoreHorizontalIcon />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  patch(index, { password: generatePassword() })
+                                }
+                              >
+                                <RefreshCwIcon />
+                                New random password
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={() => setRemoving(index)}
+                              >
+                                <Trash2Icon />
+                                Remove role
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        {roleProblems.length ? (
+                          <ul className="mt-2 space-y-0.5">
+                            {roleProblems.map((p) => (
+                              <li
+                                key={p.message}
+                                className={cn(
+                                  "text-[0.72rem] leading-snug",
+                                  p.blocking
+                                    ? "text-destructive"
+                                    : "text-warning",
+                                )}
+                              >
+                                {p.message}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody className="[&>tr>*]:border-b [&>tr>*]:border-border/45 [&>tr:last-child>*]:border-b-0 [&>tr:hover>td]:bg-foreground/[0.015]">
+                <tr>
+                  <RowHead
+                    label="Password"
+                    icon={KeyRoundIcon}
+                    description="What players type to join as this role."
+                  />
+                  {roles.map(({ role, index }) => (
+                    <td key={index} className={CELL}>
+                      <PasswordCell
+                        value={str(role.password)}
+                        label={`Password for ${str(role.name) || "this role"}`}
+                        onChange={(v) => patch(index, { password: v })}
+                      />
+                    </td>
+                  ))}
+                </tr>
+                {permissionRows.map((permission) => (
+                  <tr key={permission.key}>
+                    <RowHead
+                      label={permission.label}
+                      description={permission.description}
+                    />
+                    {roles.map(({ role, index }) => (
+                      <td key={index} className={CELL}>
+                        <Switch
+                          checked={role[permission.key] === true}
+                          aria-label={`${permission.label} for ${str(role.name) || "this role"}`}
+                          onCheckedChange={(on) =>
+                            patch(index, { [permission.key]: on })
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() =>
-                    onChange((doc) =>
-                      addRole(
-                        doc,
-                        roleFromTemplate(
-                          ROLE_TEMPLATES[ROLE_TEMPLATES.length - 1],
-                          freeName("New role"),
-                        ),
-                      ),
-                    )
+                <tr>
+                  <RowHead
+                    label="Reserved slots"
+                    description="Kept free for this role, so its players can join a busy server."
+                  />
+                  {roles.map(({ role, index }) => (
+                    <td key={index} className={CELL}>
+                      <input
+                        type="number"
+                        min={0}
+                        max={SLOT_LIMIT}
+                        aria-label={`Reserved slots for ${str(role.name) || "this role"}`}
+                        value={
+                          typeof role.reservedSlots === "number"
+                            ? role.reservedSlots
+                            : 0
+                        }
+                        onChange={(e) => {
+                          const n = Number.parseInt(e.target.value, 10);
+                          patch(index, {
+                            reservedSlots: Number.isFinite(n)
+                              ? Math.min(SLOT_LIMIT, Math.max(0, n))
+                              : 0,
+                          });
+                        }}
+                        className="h-8 w-20 rounded-lg border border-input bg-background/40 px-2.5 text-sm tabular-nums outline-none focus:border-ring focus:shadow-focus"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </Section>
+
+      <Section
+        title="Banned players"
+        description="Players are banned in game, from the Social tab. A lifted ban is saved with your other changes and takes effect when the server next starts."
+        rule
+      >
+        {bans.length === 0 ? (
+          <ListNotice icon={ShieldBanIcon}>Nobody is banned.</ListNotice>
+        ) : (
+          <ul className="divide-y divide-border/55 border-y border-border/55">
+            {bans.map((ban) => (
+              <li
+                key={ban.accountIdHash}
+                className="flex items-center gap-4 py-3"
+              >
+                <PlayerAvatar
+                  name={ban.displayName ?? null}
+                  seed={ban.accountIdHash}
+                  className="grayscale"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {ban.displayName || "Unknown player"}
+                    {ban.characterName ? (
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        as {ban.characterName}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {typeof ban.banDate === "number"
+                      ? `Banned on ${format(ban.banDate * 1000, "d MMMM yyyy")}`
+                      : "Ban date unknown"}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    onChange((doc) => removeBan(doc, ban.accountIdHash))
                   }
                 >
-                  Blank (no permissions)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardAction>
-        </CardHeader>
-        {roles.length === 0 || slotProblem ? (
-          <CardContent>
-            <Alert variant="warning">
-              <TriangleAlertIcon />
-              <AlertDescription>
-                {roles.length === 0
-                  ? 'There are no roles. The server creates a "Default" role with a random password when it starts.'
-                  : slotProblem?.message}
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        ) : null}
-      </Card>
+                  <ShieldOffIcon data-icon="inline-start" />
+                  Lift ban
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {roles.map(({ role, index }) => (
-          <RoleCard
-            // Roles have no stable id; their position in the file is it.
-            key={index}
-            role={role}
-            index={index}
-            slotCount={slotCount}
-            problems={problems.filter((p) => p.field === `role:${index}`)}
-            onChange={(patch) =>
-              onChange((doc) => updateRole(doc, index, patch))
-            }
-            onRemove={() => onChange((doc) => removeRole(doc, index))}
-          />
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldBanIcon className="size-4 text-destructive" />
-            Banned players
-          </CardTitle>
-          <CardDescription>
-            Players are banned in game, from the Social tab. Lifting a ban here
-            takes effect when the server next starts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {bans.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Nobody is banned.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {bans.map((ban) => (
-                <li
-                  key={ban.accountIdHash}
-                  className="flex items-center justify-between gap-4 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {ban.displayName || "Unknown player"}
-                      {ban.characterName ? (
-                        <span className="font-normal text-muted-foreground">
-                          {" "}
-                          · {ban.characterName}
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {typeof ban.banDate === "number"
-                        ? `Banned ${format(ban.banDate * 1000, "d MMM yyyy")}`
-                        : "Ban date unknown"}
-                    </p>
-                  </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          onChange((doc) => removeBan(doc, ban.accountIdHash))
-                        }
-                      >
-                        Lift ban
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Applies once you save</TooltipContent>
-                  </Tooltip>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <AlertDialog
+        open={removingRole !== null && removingRole !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove the {str(removingRole?.role.name) || "unnamed"} role?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Its password stops working when the server next starts, so players
+              who use it will need another role's password.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (removing !== null)
+                  onChange((doc) => removeRole(doc, removing));
+                setRemoving(null);
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

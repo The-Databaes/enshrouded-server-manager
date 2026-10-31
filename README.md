@@ -5,19 +5,28 @@
 A desktop manager for [Enshrouded](https://enshrouded.com/) dedicated servers,
 built with Tauri 2 and TanStack Start.
 
+## Getting around
+
+A navigation rail on the left shows the server's state as a flame (lit, kindling, out) and any
+SteamCMD job in progress, from every page. **Ctrl K** opens a command palette that goes to any
+page and runs the common jobs (start, stop, restart, check for updates, verify, open the server,
+save or log folder, switch theme). **Ctrl B** collapses the rail, and **Ctrl S** saves the server
+settings. Pages are laid out with type, spacing and hairlines rather than boxed cards; the shared
+pieces are in `src/components/layout/page.tsx`.
+
 ## SteamCMD
 
 The manager needs [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) to download and
 update the Enshrouded server. Valve's licence doesn't allow bundling it, so on first launch the app
 shows a setup screen that either downloads it from Valve into the app data folder (and keeps it
 updated) or points at an existing install. It can be updated, changed or removed later under
-**Settings**.
+**App settings**.
 
 Everything the app stores lives in `~/.enshrouded-server-manager` (e.g.
 `C:\Users\you\.enshrouded-server-manager`): `config.json`, the app-downloaded SteamCMD in
 `steamcmd\` and, unless you pick another folder, the server files.
 
-The **Servers** page installs the Enshrouded Dedicated Server (Steam app 2278520, anonymous
+The **Server files** page installs the Enshrouded Dedicated Server (Steam app 2278520, anonymous
 login) with SteamCMD, and can check for updates, update and verify it. Point it at a folder that
 already has the server and it is verified and adopted instead of downloaded again.
 
@@ -28,8 +37,10 @@ buffers everything until it exits. Every job shows parsed progress (bytes, speed
 ## Running the server
 
 The **Dashboard** starts, stops and restarts the server and shows its live state: status, uptime,
-players, CPU and memory, a 24-hour player chart, the console and the server's own settings. The
-**Console** page has the full live output with a filter. The backend lives in
+players, CPU and memory (with sparklines of the current run), a 24-hour player chart, the end of
+the console and the server's own settings. The **Console** page has the full live output, with
+search, a notes/errors filter and the server controls. **Players** lists who's online (from the
+console's join lines), the day's activity, and bans, which can be lifted there. The backend lives in
 `src-tauri/src/server/runtime.rs`. It is built only on things that don't change when Enshrouded
 updates:
 

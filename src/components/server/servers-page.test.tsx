@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServerRuntimeProvider } from "@/components/server/server-runtime-provider";
 import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { ServerApi } from "@/lib/server/api";
 import type { ServerStatus } from "@/lib/server/types";
 import type { SteamCmdApi } from "@/lib/steamcmd/api";
@@ -101,11 +102,13 @@ describe("Servers page", () => {
     );
 
     render(
-      <SteamCmdProvider>
-        <ServerRuntimeProvider>
-          <Servers />
-        </ServerRuntimeProvider>
-      </SteamCmdProvider>,
+      <TooltipProvider>
+        <SteamCmdProvider>
+          <ServerRuntimeProvider>
+            <Servers />
+          </ServerRuntimeProvider>
+        </SteamCmdProvider>
+      </TooltipProvider>,
     );
 
     await screen.findByText("The server will be installed here.");
@@ -142,17 +145,17 @@ describe("Servers page", () => {
       installDir: "D:\\Enshrouded",
     });
     render(
-      <SteamCmdProvider>
-        <ServerRuntimeProvider>
-          <Servers />
-        </ServerRuntimeProvider>
-      </SteamCmdProvider>,
+      <TooltipProvider>
+        <SteamCmdProvider>
+          <ServerRuntimeProvider>
+            <Servers />
+          </ServerRuntimeProvider>
+        </SteamCmdProvider>
+      </TooltipProvider>,
     );
     expect(
       await screen.findByText("The install didn't finish"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Update server" }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
   });
 });

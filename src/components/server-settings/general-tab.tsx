@@ -2,22 +2,19 @@ import { cn } from "cn";
 import { ChevronDownIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 import { useId, useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Section, SettingList, SettingRow } from "@/components/layout/page";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  PILL,
+  SEGMENT,
+  SEGMENTED,
+} from "@/components/server-settings/control-styles";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -34,37 +31,6 @@ import {
 } from "@/lib/server/settings-schema";
 
 type Update = (update: (doc: SettingsDoc) => SettingsDoc) => void;
-
-const FieldRow = ({
-  label,
-  htmlFor,
-  description,
-  error,
-  children,
-}: {
-  label: string;
-  htmlFor?: string;
-  description?: React.ReactNode;
-  error?: string;
-  children: React.ReactNode;
-}) => (
-  <div className="grid gap-x-6 gap-y-2 py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:items-center">
-    <div className="space-y-0.5">
-      <Label htmlFor={htmlFor} className="text-sm font-medium">
-        {label}
-      </Label>
-      {description ? (
-        <p className="text-xs text-pretty text-muted-foreground">
-          {description}
-        </p>
-      ) : null}
-    </div>
-    <div className="space-y-1">
-      {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
-    </div>
-  </div>
-);
 
 const text = (doc: SettingsDoc, key: string) =>
   typeof doc[key] === "string" ? (doc[key] as string) : "";
@@ -96,20 +62,51 @@ const IntegerInput = ({
   />
 );
 
+/** A switch with its state written next to it. */
+export const LabelledSwitch = ({
+  id,
+  checked,
+  onCheckedChange,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (on: boolean) => void;
+}) => (
+  <div className="flex items-center gap-2.5">
+    <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+    <span
+      className={cn(
+        "text-sm",
+        checked ? "text-foreground" : "text-muted-foreground",
+      )}
+    >
+      {checked ? "On" : "Off"}
+    </span>
+  </div>
+);
+
 type GeneralTabProps = {
   draft: SettingsDoc;
+  saved: SettingsDoc;
   problems: Problem[];
   onChange: Update;
 };
 
 /** Name, slots, server-list tags, chat, and network/folders. */
-export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
+export const GeneralTab = ({
+  draft,
+  saved,
+  problems,
+  onChange,
+}: GeneralTabProps) => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const id = useId();
   const errorFor = (field: string) =>
     problems.find((p) => p.field === field && p.blocking)?.message;
   const set = (key: string, value: unknown) =>
     onChange((doc) => setTopLevel(doc, key, value));
+  const changed = (...keys: string[]) =>
+    keys.some((k) => JSON.stringify(draft[k]) !== JSON.stringify(saved[k]));
 
   const tags = Array.isArray(draft.tags)
     ? draft.tags.filter((t): t is string => typeof t === "string")
@@ -117,12 +114,9 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
   const unknownTags = tags.filter((t) => !KNOWN_TAGS.has(t));
   const slots = typeof draft.slotCount === "number" ? draft.slotCount : 16;
   const voice = draft.enableVoiceChat === true;
-  const advancedError = [
-    "ip",
-    "queryPort",
-    "saveDirectory",
-    "logDirectory",
-  ].some((f) => errorFor(f));
+  const advancedFields = ["ip", "queryPort", "saveDirectory", "logDirectory"];
+  const advancedError = advancedFields.some((f) => errorFor(f));
+  const advancedChanged = changed(...advancedFields);
 
   const removeTag = (tag: string) =>
     set(
@@ -131,20 +125,18 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
     );
 
   return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Server listing</CardTitle>
-          <CardDescription>
-            How the server appears in the game's server list.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y divide-border/60">
-          <FieldRow
+    <div className="space-y-14">
+      <Section
+        title="Listing"
+        description="How the server appears in the game's server list."
+      >
+        <SettingList>
+          <SettingRow
             label="Server name"
             htmlFor={`${id}-server-name`}
             description="What players search for. Please keep it friendly."
             error={errorFor("name")}
+            changed={changed("name")}
           >
             <Input
               id={`${id}-server-name`}
@@ -153,12 +145,13 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
               aria-invalid={Boolean(errorFor("name")) || undefined}
               onChange={(e) => set("name", e.target.value)}
             />
-          </FieldRow>
-          <FieldRow
+          </SettingRow>
+          <SettingRow
             label="Player slots"
             htmlFor={`${id}-slot-count`}
             description={`How many players can be on at once, up to ${SLOT_LIMIT}.`}
             error={errorFor("slotCount")}
+            changed={changed("slotCount")}
           >
             <div className="flex items-center gap-3">
               <Slider
@@ -174,46 +167,48 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                 value={draft.slotCount}
                 invalid={Boolean(errorFor("slotCount"))}
                 onChange={(v) => set("slotCount", v)}
-                className="h-8 w-16 text-right"
+                className="h-8 w-16 shrink-0 text-right"
               />
             </div>
-          </FieldRow>
-          <div className="space-y-3 py-3">
-            <div className="space-y-0.5">
+          </SettingRow>
+          <div
+            data-changed={changed("tags") || undefined}
+            className="relative space-y-4 py-5 before:absolute before:top-5 before:bottom-5 before:-left-4 before:w-0.5 before:rounded-full before:bg-ember before:opacity-0 before:shadow-[0_0_8px_var(--ember)] data-changed:before:opacity-100"
+          >
+            <div className="space-y-1">
               <p className="text-sm font-medium">Tags</p>
-              <p className="text-xs text-muted-foreground">
-                Help players find a server that suits them: they can filter the
-                list by these.
+              <p className="text-[0.8rem] text-muted-foreground">
+                Help players find a server that suits them: the server list can
+                be filtered by these.
               </p>
             </div>
-            {TAG_GROUPS.map((group) => (
-              <div key={group.title} className="space-y-1.5">
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  {group.title}
-                </p>
-                <ToggleGroup
-                  type="multiple"
-                  variant="outline"
-                  size="sm"
-                  spacing={1}
-                  value={tags}
-                  // `value` holds every tag, so the new list includes the
-                  // other groups' tags (and unknown ones) unchanged.
-                  onValueChange={(next) => set("tags", next)}
-                  className="flex-wrap justify-start"
-                >
-                  {group.tags.map((tag) => (
-                    <ToggleGroupItem
-                      key={tag.value}
-                      value={tag.value}
-                      className="data-[state=on]:border-ember/50 data-[state=on]:bg-ember/12 data-[state=on]:text-ember"
-                    >
-                      {tag.label}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </div>
-            ))}
+            <div className="grid gap-4 md:grid-cols-[7rem_minmax(0,1fr)] md:gap-y-3">
+              {TAG_GROUPS.map((group) => (
+                <div key={group.title} className="contents">
+                  <p className="eyebrow pt-2 text-[0.62rem]">{group.title}</p>
+                  <ToggleGroup
+                    type="multiple"
+                    spacing={1.5}
+                    value={tags}
+                    // `value` holds every tag, so the new list includes the
+                    // other groups' tags (and unknown ones) unchanged.
+                    onValueChange={(next) => set("tags", next)}
+                    className="flex-wrap justify-start"
+                    aria-label={`${group.title} tags`}
+                  >
+                    {group.tags.map((tag) => (
+                      <ToggleGroupItem
+                        key={tag.value}
+                        value={tag.value}
+                        className={PILL}
+                      >
+                        {tag.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+              ))}
+            </div>
             {unknownTags.length ? (
               <Alert variant="warning">
                 <TriangleAlertIcon />
@@ -225,129 +220,129 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {unknownTags.map((tag) => (
-                      <Badge key={tag} variant="warning" className="gap-1 pr-1">
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 py-0.5 pr-1 pl-2.5 text-xs text-warning"
+                      >
                         {tag}
                         <button
                           type="button"
                           aria-label={`Remove tag ${tag}`}
                           onClick={() => removeTag(tag)}
-                          className="rounded-sm p-0.5 hover:bg-warning/20"
+                          className="rounded-full p-0.5 hover:bg-warning/20"
                         >
                           <XIcon className="size-3" />
                         </button>
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </AlertDescription>
               </Alert>
             ) : null}
           </div>
-        </CardContent>
-      </Card>
+        </SettingList>
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Chat</CardTitle>
-          <CardDescription>Both are off on a new server.</CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y divide-border/60">
-          <FieldRow
+      <Section title="Chat" description="Both are off on a new server.">
+        <SettingList>
+          <SettingRow
             label="Text chat"
             htmlFor={`${id}-text-chat`}
             description="Players can type messages to each other."
+            changed={changed("enableTextChat")}
           >
-            <div className="flex items-center gap-2">
-              <Switch
-                id={`${id}-text-chat`}
-                checked={draft.enableTextChat === true}
-                onCheckedChange={(on) => set("enableTextChat", on)}
-              />
-              <span className="text-sm text-muted-foreground">
-                {draft.enableTextChat === true ? "On" : "Off"}
-              </span>
-            </div>
-          </FieldRow>
-          <FieldRow
+            <LabelledSwitch
+              id={`${id}-text-chat`}
+              checked={draft.enableTextChat === true}
+              onCheckedChange={(on) => set("enableTextChat", on)}
+            />
+          </SettingRow>
+          <SettingRow
             label="Voice chat"
             htmlFor={`${id}-voice-chat`}
             description="Players can talk over their microphones."
+            changed={changed("enableVoiceChat")}
           >
-            <div className="flex items-center gap-2">
-              <Switch
-                id={`${id}-voice-chat`}
-                checked={voice}
-                onCheckedChange={(on) => set("enableVoiceChat", on)}
-              />
-              <span className="text-sm text-muted-foreground">
-                {voice ? "On" : "Off"}
-              </span>
-            </div>
-          </FieldRow>
-          <FieldRow
+            <LabelledSwitch
+              id={`${id}-voice-chat`}
+              checked={voice}
+              onCheckedChange={(on) => set("enableVoiceChat", on)}
+            />
+          </SettingRow>
+          <SettingRow
             label="Who you hear"
             description={
               voice
                 ? "Proximity is like talking in person; Global is a group call."
                 : "Turn voice chat on to choose."
             }
+            changed={changed("voiceChatMode")}
+            inactive={!voice}
           >
             <ToggleGroup
               type="single"
-              variant="outline"
               size="sm"
+              spacing={0.5}
               disabled={!voice}
               value={text(draft, "voiceChatMode") || "Proximity"}
               onValueChange={(v) => v && set("voiceChatMode", v)}
               aria-label="Voice chat mode"
-              className="w-full"
+              className={SEGMENTED}
             >
               {VOICE_CHAT_MODES.map((mode) => (
                 <ToggleGroupItem
                   key={mode.value}
                   value={mode.value}
-                  className="flex-1 data-[state=on]:border-ember/50 data-[state=on]:bg-ember/12 data-[state=on]:text-ember"
+                  className={SEGMENT}
                 >
                   {mode.label}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-          </FieldRow>
-        </CardContent>
-      </Card>
+          </SettingRow>
+        </SettingList>
+      </Section>
 
       <Collapsible
         open={advancedOpen || advancedError}
         onOpenChange={setAdvancedOpen}
       >
-        <Card>
-          <CardHeader>
-            <CollapsibleTrigger asChild>
-              <button
-                type="button"
-                className="flex w-full items-center justify-between gap-2 text-left outline-none"
-              >
-                <div className="space-y-1.5">
-                  <CardTitle>Network and folders</CardTitle>
-                  <CardDescription>
-                    Advanced. The defaults suit almost every server.
-                  </CardDescription>
-                </div>
+        <section className="space-y-5">
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="group flex w-full items-start justify-between gap-4 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+            >
+              <div className="space-y-1.5">
+                <h2 className="flex items-center gap-2 text-[1.05rem] font-semibold tracking-[0.06em]">
+                  Network and folders
+                  {advancedChanged ? (
+                    <span className="size-1.5 rounded-full bg-ember shadow-[0_0_6px_var(--ember)]" />
+                  ) : null}
+                </h2>
+                <p className="text-[0.84rem] text-muted-foreground">
+                  Advanced. The defaults suit almost every server.
+                </p>
+              </div>
+              <span className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground group-hover:text-foreground">
+                {advancedOpen || advancedError ? "Hide" : "Show"}
                 <ChevronDownIcon
                   className={cn(
-                    "size-4 shrink-0 text-muted-foreground transition-transform",
+                    "size-4 transition-transform",
                     (advancedOpen || advancedError) && "rotate-180",
                   )}
                 />
-              </button>
-            </CollapsibleTrigger>
-          </CardHeader>
+              </span>
+            </button>
+          </CollapsibleTrigger>
           <CollapsibleContent>
-            <CardContent className="divide-y divide-border/60">
-              <FieldRow
+            <SettingList>
+              <SettingRow
                 label="Query port"
                 htmlFor={`${id}-query-port`}
                 description="The UDP port players connect on. To let players in from the internet, forward it on your router."
                 error={errorFor("queryPort")}
+                changed={changed("queryPort")}
               >
                 <IntegerInput
                   id={`${id}-query-port`}
@@ -355,12 +350,13 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   invalid={Boolean(errorFor("queryPort"))}
                   onChange={(v) => set("queryPort", v)}
                 />
-              </FieldRow>
-              <FieldRow
+              </SettingRow>
+              <SettingRow
                 label="Listen address"
                 htmlFor={`${id}-listen-ip`}
                 description="0.0.0.0 listens on every network adapter. Only change this to tie the server to one adapter."
                 error={errorFor("ip")}
+                changed={changed("ip")}
               >
                 <Input
                   id={`${id}-listen-ip`}
@@ -369,8 +365,8 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   onChange={(e) => set("ip", e.target.value)}
                   className="font-mono"
                 />
-              </FieldRow>
-              <FieldRow
+              </SettingRow>
+              <SettingRow
                 label="Save folder"
                 htmlFor={`${id}-save-dir`}
                 description={
@@ -383,6 +379,7 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   </>
                 }
                 error={errorFor("saveDirectory")}
+                changed={changed("saveDirectory")}
               >
                 <Input
                   id={`${id}-save-dir`}
@@ -391,12 +388,13 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   onChange={(e) => set("saveDirectory", e.target.value)}
                   className="font-mono"
                 />
-              </FieldRow>
-              <FieldRow
+              </SettingRow>
+              <SettingRow
                 label="Log folder"
                 htmlFor={`${id}-log-dir`}
                 description="Where the server writes its log files."
                 error={errorFor("logDirectory")}
+                changed={changed("logDirectory")}
               >
                 <Input
                   id={`${id}-log-dir`}
@@ -405,10 +403,10 @@ export const GeneralTab = ({ draft, problems, onChange }: GeneralTabProps) => {
                   onChange={(e) => set("logDirectory", e.target.value)}
                   className="font-mono"
                 />
-              </FieldRow>
-            </CardContent>
+              </SettingRow>
+            </SettingList>
           </CollapsibleContent>
-        </Card>
+        </section>
       </Collapsible>
     </div>
   );

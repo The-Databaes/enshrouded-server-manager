@@ -1,7 +1,6 @@
 import { cn } from "cn";
-import { ArrowDownIcon, CopyIcon, TerminalIcon } from "lucide-react";
+import { ArrowDownIcon, TerminalIcon } from "lucide-react";
 import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { formatClock } from "@/lib/server/runtime-display";
@@ -10,40 +9,86 @@ import type { LineKind, LogLine } from "@/lib/server/runtime-types";
 /** Lines per rendered chunk; only the newest chunk re-renders on output. */
 const CHUNK_SIZE = 200;
 
-const KIND_CLASS: Record<LineKind, string | undefined> = {
-  output: undefined,
-  info: "text-ember",
-  error: "text-destructive",
+const KIND_CLASS: Record<LineKind, string> = {
+  output: "",
+  // The manager's own notes ("The server is up…"): ember, with a marker.
+  info: "text-ember before:bg-ember/70",
+  error: "bg-destructive/[0.07] text-destructive before:bg-destructive/80",
 };
 
 type Chunk = { key: number; lines: LogLine[] };
 
+/** `text` with every case-insensitive match of `query` highlighted. */
+const Highlighted = ({ text, query }: { text: string; query: string }) => {
+  if (!query) return text;
+  const lower = text.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let from = 0;
+  for (
+    let at = lower.indexOf(query);
+    at !== -1;
+    at = lower.indexOf(query, at + query.length)
+  ) {
+    if (at > from) parts.push(text.slice(from, at));
+    parts.push(
+      <mark
+        key={at}
+        className="rounded-[3px] bg-ember/30 px-px text-foreground"
+      >
+        {text.slice(at, at + query.length)}
+      </mark>,
+    );
+    from = at + query.length;
+  }
+  if (from < text.length) parts.push(text.slice(from));
+  return parts;
+};
+
 const LogChunk = memo(
-  ({ lines, timestamps }: { lines: LogLine[]; timestamps: boolean }) => (
+  ({
+    lines,
+    timestamps,
+    wrap,
+    query,
+  }: {
+    lines: LogLine[];
+    timestamps: boolean;
+    wrap: boolean;
+    query: string;
+  }) => (
     // Off-screen chunks skip layout and paint entirely.
     <div className="[contain-intrinsic-size:auto_3600px] [content-visibility:auto]">
       {lines.map((line) => (
         <div
           key={line.seq}
           className={cn(
-            "whitespace-pre-wrap wrap-anywhere",
+            "relative flex gap-4 rounded-sm px-2 before:absolute before:inset-y-0.5 before:left-0 before:w-0.5 before:rounded-full hover:bg-foreground/[0.035]",
             KIND_CLASS[line.kind],
           )}
         >
           {timestamps ? (
-            <span className="mr-3 text-muted-foreground/70 select-none">
+            <span className="shrink-0 text-muted-foreground/55 select-none">
               {formatClock(line.at)}
             </span>
           ) : null}
-          {line.text}
+          <span
+            className={cn(
+              "min-w-0 flex-1",
+              wrap ? "whitespace-pre-wrap wrap-anywhere" : "whitespace-pre",
+            )}
+          >
+            <Highlighted text={line.text} query={query} />
+          </span>
         </div>
       ))}
     </div>
   ),
   // Lines never change once written, so a chunk is the same if it spans the
-  // same range.
+  // same range and is drawn the same way.
   (a, b) =>
     a.timestamps === b.timestamps &&
+    a.wrap === b.wrap &&
+    a.query === b.query &&
     a.lines.length === b.lines.length &&
     a.lines[0]?.seq === b.lines[0]?.seq &&
     a.lines.at(-1)?.seq === b.lines.at(-1)?.seq,
@@ -64,13 +109,14 @@ type ServerConsoleProps = {
   lines: LogLine[];
   /** The server is running, so more output may come. */
   live: boolean;
-  title?: string;
-  /** Extra controls for the toolbar (e.g. a filter). */
+  /** Controls for the toolbar (filters, toggles). */
   toolbar?: React.ReactNode;
-  emptyText?: string;
+  /** Shown when there are no lines. */
+  empty?: React.ReactNode;
   timestamps?: boolean;
-  /** Height of the scrolling area. */
-  viewportClassName?: string;
+  wrap?: boolean;
+  /** Text to highlight (lower case). */
+  highlight?: string;
   className?: string;
 };
 
@@ -81,11 +127,11 @@ type ServerConsoleProps = {
 export const ServerConsole = ({
   lines,
   live,
-  title = "Server console",
   toolbar,
-  emptyText = "Nothing yet. Output appears here when the server starts.",
+  empty = "Nothing yet. Output appears here when the server starts.",
   timestamps = true,
-  viewportClassName = "h-96",
+  wrap = true,
+  highlight = "",
   className,
 }: ServerConsoleProps) => {
   const viewport = useRef<HTMLDivElement>(null);
@@ -104,61 +150,36 @@ export const ServerConsole = ({
     setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 24);
   };
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        lines.map((l) => `${formatClock(l.at)}  ${l.text}`).join("\n"),
-      );
-      toast.success("Console output copied");
-    } catch {
-      toast.error("Couldn't copy to the clipboard");
-    }
-  };
-
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border bg-console text-foreground/85",
+        "flex min-h-0 flex-col overflow-hidden rounded-xl border bg-console text-foreground/85 shadow-[inset_0_1px_0_0_oklch(1_0_0/3%),0_24px_48px_-28px_oklch(0_0_0/80%)]",
         className,
       )}
     >
-      <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-1.5 text-xs">
-        <TerminalIcon className="size-3.5 text-muted-foreground" />
-        <span className="font-semibold text-foreground">{title}</span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b bg-foreground/[0.02] px-3 py-2 text-xs">
+        <span className="flex items-center gap-2 pl-1 font-semibold text-foreground">
+          <TerminalIcon className="size-3.5 text-muted-foreground" />
+          enshrouded_server
+        </span>
         {live ? (
           <span className="flex items-center gap-1.5 text-success">
             <span className="size-1.5 animate-pulse rounded-full bg-success" />
             live
           </span>
         ) : null}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           {toolbar}
-          <span className="text-muted-foreground tabular-nums">
-            {lines.length} {lines.length === 1 ? "line" : "lines"}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6 text-muted-foreground"
-            aria-label="Copy console output"
-            onClick={() => void copy()}
-            disabled={!lines.length}
-          >
-            <CopyIcon className="size-3" />
-          </Button>
         </div>
       </div>
-      <div className="relative">
+      <div className="relative min-h-0 flex-1">
         <div
           ref={viewport}
           onScroll={onScroll}
           role="log"
           aria-live="off"
-          aria-label={title}
-          className={cn(
-            "overflow-y-auto px-4 py-3 font-mono text-[0.72rem] leading-relaxed",
-            viewportClassName,
-          )}
+          aria-label="Server console output"
+          className="absolute inset-0 overflow-auto px-2 py-3 font-mono text-[0.74rem] leading-[1.7]"
         >
           {chunks.length ? (
             chunks.map((chunk) => (
@@ -166,17 +187,21 @@ export const ServerConsole = ({
                 key={chunk.key}
                 lines={chunk.lines}
                 timestamps={timestamps}
+                wrap={wrap}
+                query={highlight}
               />
             ))
           ) : (
-            <p className="text-muted-foreground">{emptyText}</p>
+            <div className="flex h-full items-center justify-center px-6 text-center font-sans text-sm text-muted-foreground">
+              {empty}
+            </div>
           )}
         </div>
         {!follow ? (
           <Button
             size="sm"
             variant="secondary"
-            className="absolute right-3 bottom-3 shadow-shroud"
+            className="absolute right-4 bottom-4 animate-rise-in rounded-full shadow-shroud"
             onClick={() => setFollow(true)}
           >
             <ArrowDownIcon data-icon="inline-start" />

@@ -1,14 +1,25 @@
-import { createFileRoute, Link, useBlocker } from "@tanstack/react-router";
 import {
+  createFileRoute,
+  Link,
+  useBlocker,
+  useNavigate,
+} from "@tanstack/react-router";
+import { cn } from "cn";
+import {
+  FileCodeIcon,
   FilePlusIcon,
+  GlobeIcon,
   InfoIcon,
+  type LucideIcon,
+  MountainSnowIcon,
   RotateCcwIcon,
   SaveIcon,
   TriangleAlertIcon,
+  UsersRoundIcon,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
-import { PageHeader } from "@/components/app-shell/app-shell";
+import { Page, PageHeader } from "@/components/layout/page";
 import { FileTab } from "@/components/server-settings/file-tab";
 import { GeneralTab } from "@/components/server-settings/general-tab";
 import { RolesTab } from "@/components/server-settings/roles-tab";
@@ -25,11 +36,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -37,19 +47,78 @@ import {
 } from "@/components/ui/tooltip";
 import { useServer } from "@/hooks/use-server";
 import {
+  type SettingsChange,
   type SettingsDoc,
   validateSettings,
 } from "@/lib/server/settings-editor";
 import { steamcmdApi } from "@/lib/steamcmd/api";
 
-const TAB_FIELDS: Record<string, (field: string) => boolean> = {
-  general: (f) => !f.startsWith("role:") && f !== "userGroups",
-  roles: (f) => f.startsWith("role:") || f === "userGroups",
+const SECTIONS = ["general", "world", "roles", "file"] as const;
+type SectionId = (typeof SECTIONS)[number];
+
+const SECTION_INFO: Record<
+  SectionId,
+  { label: string; hint: string; icon: LucideIcon }
+> = {
+  general: {
+    label: "General",
+    hint: "Name, slots, chat",
+    icon: GlobeIcon,
+  },
+  world: {
+    label: "World",
+    hint: "Difficulty and rules",
+    icon: MountainSnowIcon,
+  },
+  roles: {
+    label: "Roles and bans",
+    hint: "Passwords, permissions",
+    icon: UsersRoundIcon,
+  },
+  file: { label: "File", hint: "What gets saved", icon: FileCodeIcon },
 };
+
+/** Which section a problem's field belongs to. */
+const problemSection = (field: string): SectionId =>
+  field.startsWith("role:") || field === "userGroups" ? "roles" : "general";
+
+/** Which section a change belongs to. */
+const changeSection = (change: SettingsChange): SectionId => {
+  if (change.op === "unban") return "roles";
+  const [key] = change.path;
+  if (key === "gameSettings" || key === "gameSettingsPreset") return "world";
+  if (key === "userGroups" || key === "bannedAccounts" || key === "bans")
+    return "roles";
+  return "general";
+};
+
+const SettingsSkeleton = () => (
+  <div
+    className="grid gap-14 2xl:grid-cols-[12.5rem_minmax(0,1fr)]"
+    aria-busy="true"
+  >
+    <div className="space-y-2">
+      {SECTIONS.map((s) => (
+        <Skeleton key={s} className="h-12 w-full" />
+      ))}
+    </div>
+    <div className="space-y-6">
+      <Skeleton className="h-28 w-full" />
+      <Skeleton className="h-72 w-full" />
+    </div>
+  </div>
+);
 
 const ServerSettings = () => {
   const files = useServer().status;
   const editor = useSettingsEditor();
+  const { section = "general" } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const setSection = useCallback(
+    (next: SectionId) =>
+      void navigate({ search: { section: next }, replace: true }),
+    [navigate],
+  );
   const { file, draft, saved, changes, dirty, saving, serverRunning } = editor;
   const { setDraft } = editor;
   const update = useCallback(
@@ -63,35 +132,74 @@ const ServerSettings = () => {
   );
   const blocking = problems.filter((p) => p.blocking);
   const creating = file?.file === "missing";
+  const saveDisabled = !dirty || blocking.length > 0 || saving !== null;
+  const primaryMode = serverRunning ? "restart" : "save";
 
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty && !creating && !saving,
+    // Switching sections only changes the search; only leaving the page
+    // would lose the draft.
+    shouldBlockFn: ({ current, next }) =>
+      current.pathname !== next.pathname && dirty && !creating && !saving,
     enableBeforeUnload: () => dirty && !creating,
     withResolver: true,
   });
 
+  // Ctrl+S saves, like everywhere else.
+  const { save } = editor;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saveDisabled) void save(primaryMode);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [saveDisabled, save, primaryMode]);
+
+  const name =
+    draft && typeof draft.name === "string" && draft.name.trim()
+      ? draft.name
+      : (files?.settings?.name ?? "Your server");
+
+  const header = (
+    <PageHeader
+      eyebrow={
+        <>
+          {name}
+          <span className="text-muted-foreground/50">·</span>
+          <span className="normal-case tracking-normal">
+            enshrouded_server.json
+          </span>
+        </>
+      }
+      title="Server settings"
+      description="What the server reads when it starts: how it's listed, how hard the world is, and who may join."
+    />
+  );
+
   if (files && files.state === "notInstalled") {
     return (
-      <>
-        <PageHeader title="Server Settings" />
+      <Page>
+        {header}
         <Alert variant="info">
           <InfoIcon />
           <AlertTitle>Install the server first</AlertTitle>
           <AlertDescription>
-            <p>Its settings live next to the server files.</p>
-            <Button size="sm" variant="outline" className="mt-2" asChild>
+            <p>Its settings live next to the server's files.</p>
+            <Button size="sm" variant="outline" className="mt-3" asChild>
               <Link to="/servers">Set up the server</Link>
             </Button>
           </AlertDescription>
         </Alert>
-      </>
+      </Page>
     );
   }
 
   if (editor.loadError) {
     return (
-      <>
-        <PageHeader title="Server Settings" />
+      <Page>
+        {header}
         <Alert variant="destructive">
           <TriangleAlertIcon />
           <AlertTitle>Couldn't read the settings</AlertTitle>
@@ -100,7 +208,7 @@ const ServerSettings = () => {
             <Button
               size="sm"
               variant="outline"
-              className="mt-2"
+              className="mt-3"
               onClick={() => void editor.reload()}
             >
               <RotateCcwIcon data-icon="inline-start" />
@@ -108,34 +216,33 @@ const ServerSettings = () => {
             </Button>
           </AlertDescription>
         </Alert>
-      </>
+      </Page>
     );
   }
 
   if (!file || (file.file !== "invalid" && (!draft || !saved))) {
     return (
-      <>
-        <PageHeader title="Server Settings" description="Loading…" />
-        <Skeleton className="h-10 w-96" />
-        <Skeleton className="h-96 w-full" />
-      </>
+      <Page width="wide">
+        {header}
+        <SettingsSkeleton />
+      </Page>
     );
   }
 
   if (file.file === "invalid" || !draft || !saved) {
     return (
-      <>
-        <PageHeader title="Server Settings" />
+      <Page>
+        {header}
         <Alert variant="destructive">
           <TriangleAlertIcon />
           <AlertTitle>The settings file can't be read</AlertTitle>
           <AlertDescription>
             <p>{file.problem}</p>
-            <p className="mt-1">
+            <p>
               The server won't start like this either. Fix the file in a text
               editor, or delete it to have the server create a fresh one.
             </p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -154,80 +261,30 @@ const ServerSettings = () => {
             </div>
           </AlertDescription>
         </Alert>
-      </>
+      </Page>
     );
   }
 
-  const tabErrors = (tab: string) =>
-    blocking.filter((p) => TAB_FIELDS[tab]?.(p.field)).length;
-  const saveDisabled = !dirty || blocking.length > 0 || saving !== null;
-  const primaryLabel = serverRunning
-    ? "Save and restart"
-    : creating
-      ? "Create settings file"
+  const errorsIn = (id: SectionId) =>
+    blocking.filter((p) => problemSection(p.field) === id).length;
+  const changesIn = (id: SectionId) =>
+    id === "file"
+      ? changes.length
+      : changes.filter((c) => changeSection(c) === id).length;
+
+  // A file that doesn't exist yet has nothing to compare with: mark no
+  // setting as changed.
+  const baseline = creating ? draft : saved;
+
+  const primaryLabel = creating
+    ? "Create settings file"
+    : serverRunning
+      ? "Save and restart"
       : "Save";
 
-  const saveButtons = (
-    <>
-      {dirty && !creating ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={saving !== null}
-          onClick={editor.discard}
-        >
-          Discard
-        </Button>
-      ) : null}
-      {serverRunning ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={saveDisabled}
-              onClick={() => void editor.save("save")}
-            >
-              {saving === "save" ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <SaveIcon data-icon="inline-start" />
-              )}
-              Save only
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-64">
-            The running server keeps its current settings until it next starts.
-          </TooltipContent>
-        </Tooltip>
-      ) : null}
-      <Button
-        size="sm"
-        className="shadow-ember"
-        disabled={saveDisabled}
-        onClick={() => void editor.save(serverRunning ? "restart" : "save")}
-      >
-        {saving === (serverRunning ? "restart" : "save") ? (
-          <Spinner data-icon="inline-start" />
-        ) : creating ? (
-          <FilePlusIcon data-icon="inline-start" />
-        ) : serverRunning ? (
-          <RotateCcwIcon data-icon="inline-start" />
-        ) : (
-          <SaveIcon data-icon="inline-start" />
-        )}
-        {primaryLabel}
-      </Button>
-    </>
-  );
-
   return (
-    <>
-      <PageHeader
-        title="Server Settings"
-        description={`${typeof draft.name === "string" && draft.name.trim() ? draft.name : "Your server"} · enshrouded_server.json`}
-        actions={saveButtons}
-      />
+    <Page width="wide">
+      {header}
 
       {creating ? (
         <Alert variant="info">
@@ -239,8 +296,7 @@ const ServerSettings = () => {
             start the server and it creates the same file itself.
           </AlertDescription>
         </Alert>
-      ) : null}
-      {serverRunning ? (
+      ) : serverRunning ? (
         <Alert variant="info">
           <InfoIcon />
           <AlertDescription>
@@ -251,60 +307,180 @@ const ServerSettings = () => {
         </Alert>
       ) : null}
 
-      <Tabs defaultValue="world" className="gap-4">
-        <TabsList>
-          <TabsTrigger value="general">
-            General
-            {tabErrors("general") ? (
-              <Badge variant="destructive" className="h-4 px-1 text-[0.6rem]">
-                {tabErrors("general")}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="world">World and difficulty</TabsTrigger>
-          <TabsTrigger value="roles">
-            Roles and bans
-            {tabErrors("roles") ? (
-              <Badge variant="destructive" className="h-4 px-1 text-[0.6rem]">
-                {tabErrors("roles")}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="file">File</TabsTrigger>
-        </TabsList>
-        <TabsContent value="general">
-          <GeneralTab draft={draft} problems={problems} onChange={update} />
-        </TabsContent>
-        <TabsContent value="world">
-          <WorldTab saved={saved} draft={draft} onChange={update} />
-        </TabsContent>
-        <TabsContent value="roles">
-          <RolesTab draft={draft} problems={problems} onChange={update} />
-        </TabsContent>
-        <TabsContent value="file">
-          <FileTab file={file} draft={draft} changes={changes} />
-        </TabsContent>
-      </Tabs>
+      <div className="grid gap-x-14 gap-y-8 2xl:grid-cols-[12.5rem_minmax(0,1fr)]">
+        <nav
+          aria-label="Settings sections"
+          className="flex gap-1 overflow-x-auto 2xl:sticky 2xl:top-8 2xl:flex-col 2xl:self-start"
+        >
+          {SECTIONS.map((id) => {
+            const info = SECTION_INFO[id];
+            const active = id === section;
+            const errors = errorsIn(id);
+            const edits = changesIn(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-current={active ? "page" : undefined}
+                onClick={() => setSection(id)}
+                className={cn(
+                  "group relative flex min-w-44 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                  active
+                    ? "bg-foreground/[0.055] text-foreground"
+                    : "text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground",
+                )}
+              >
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-ember shadow-[0_0_8px_var(--ember)] 2xl:inset-x-auto 2xl:top-3 2xl:bottom-3 2xl:left-0 2xl:h-auto 2xl:w-0.5"
+                  />
+                ) : null}
+                <info.icon
+                  className={cn(
+                    "size-4 shrink-0",
+                    active ? "text-ember" : "text-muted-foreground",
+                  )}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">
+                    {info.label}
+                  </span>
+                  <span className="block truncate text-[0.7rem] text-muted-foreground">
+                    {info.hint}
+                  </span>
+                </span>
+                {errors ? (
+                  <span className="rounded-full bg-destructive/15 px-1.5 text-[0.68rem] leading-4.5 font-semibold text-destructive tabular-nums">
+                    {errors}
+                  </span>
+                ) : edits && !creating ? (
+                  <span className="rounded-full bg-ember/15 px-1.5 text-[0.68rem] leading-4.5 font-semibold text-ember tabular-nums">
+                    {edits}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
 
-      {dirty && !creating ? (
-        <div className="sticky bottom-4 z-10 mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-3 rounded-xl border border-ember/40 bg-popover/95 px-4 py-2.5 shadow-stone backdrop-blur">
-          <p className="text-sm">
-            {blocking.length ? (
-              <span className="text-destructive">
-                {blocking.length === 1
-                  ? blocking[0].message
-                  : `${blocking.length} problems to fix before saving.`}
-              </span>
-            ) : (
-              <>
-                <span className="font-semibold tabular-nums">
-                  {changes.length}
-                </span>{" "}
-                unsaved {changes.length === 1 ? "change" : "changes"}
-              </>
-            )}
-          </p>
-          <div className="flex items-center gap-2">{saveButtons}</div>
+        <div key={section} className="min-w-0 animate-page-in">
+          {section === "general" ? (
+            <GeneralTab
+              draft={draft}
+              saved={baseline}
+              problems={problems}
+              onChange={update}
+            />
+          ) : section === "world" ? (
+            <WorldTab saved={baseline} draft={draft} onChange={update} />
+          ) : section === "roles" ? (
+            <RolesTab draft={draft} problems={problems} onChange={update} />
+          ) : (
+            <FileTab file={file} draft={draft} changes={changes} />
+          )}
+        </div>
+      </div>
+
+      {dirty ? (
+        <div className="pointer-events-none sticky bottom-6 z-20 -mt-4 flex justify-center">
+          <div className="pointer-events-auto flex animate-rise-in flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl py-2 pr-2 pl-5 glass">
+            <p className="text-sm">
+              {blocking.length ? (
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-destructive hover:underline"
+                  onClick={() => setSection(problemSection(blocking[0].field))}
+                >
+                  <TriangleAlertIcon className="size-4" />
+                  {blocking.length === 1
+                    ? blocking[0].message
+                    : `${blocking.length} problems to fix before saving`}
+                </button>
+              ) : creating ? (
+                <span className="text-muted-foreground">
+                  Not created yet. The server would use these defaults.
+                </span>
+              ) : (
+                <span className="flex items-center gap-2.5">
+                  <span className="size-2 rounded-full bg-ember shadow-[0_0_8px_var(--ember)]" />
+                  <span>
+                    <span className="font-semibold tabular-nums">
+                      {changes.length}
+                    </span>{" "}
+                    unsaved {changes.length === 1 ? "change" : "changes"}
+                  </span>
+                </span>
+              )}
+            </p>
+            <div className="flex items-center gap-1.5">
+              {section !== "file" && !creating ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSection("file")}
+                >
+                  Review
+                </Button>
+              ) : null}
+              {!creating ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={saving !== null}
+                  onClick={editor.discard}
+                >
+                  Discard
+                </Button>
+              ) : null}
+              {serverRunning && !creating ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={saveDisabled}
+                      onClick={() => void editor.save("save")}
+                    >
+                      {saving === "save" ? (
+                        <Spinner data-icon="inline-start" />
+                      ) : (
+                        <SaveIcon data-icon="inline-start" />
+                      )}
+                      Save only
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-64">
+                    The running server keeps its current settings until it next
+                    starts.
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    disabled={saveDisabled}
+                    onClick={() => void editor.save(primaryMode)}
+                  >
+                    {saving === primaryMode ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : creating ? (
+                      <FilePlusIcon data-icon="inline-start" />
+                    ) : serverRunning ? (
+                      <RotateCcwIcon data-icon="inline-start" />
+                    ) : (
+                      <SaveIcon data-icon="inline-start" />
+                    )}
+                    {primaryLabel}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <Kbd>Ctrl S</Kbd>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -334,10 +510,14 @@ const ServerSettings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </Page>
   );
 };
 
 export const Route = createFileRoute("/server-settings")({
+  validateSearch: (search: Record<string, unknown>): { section?: SectionId } =>
+    SECTIONS.includes(search.section as SectionId)
+      ? { section: search.section as SectionId }
+      : {},
   component: ServerSettings,
 });

@@ -1,18 +1,17 @@
-import { formatDistanceToNow } from "date-fns";
 import {
   DownloadIcon,
-  FolderOpenIcon,
+  FolderSearchIcon,
   RefreshCwIcon,
   Trash2Icon,
-  TriangleAlertIcon,
-  XIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Ago, RevealButton } from "@/components/dashboard/server-details";
+import { Detail, DetailList, Unknown } from "@/components/layout/page";
+import { StatusDot } from "@/components/status-dot";
 import { ExistingInstallForm } from "@/components/steamcmd/existing-install-form";
 import { TaskProgress } from "@/components/steamcmd/task-progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,17 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge, BadgeDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -45,24 +34,11 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
-import { steamcmdApi, toAppError } from "@/lib/steamcmd/api";
-import { isServerTask, TASK_TITLES } from "@/lib/steamcmd/task";
+import { toAppError } from "@/lib/steamcmd/api";
+import { isServerTask } from "@/lib/steamcmd/task";
 
-const Row = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <div className="grid gap-1 sm:grid-cols-[9rem_1fr] sm:gap-4">
-    <dt className="text-sm text-muted-foreground">{label}</dt>
-    <dd className="min-w-0 text-sm">{children}</dd>
-  </div>
-);
-
-/** SteamCMD section of the Settings page. */
-export const SteamCmdSettingsCard = () => {
+/** SteamCMD's status and upkeep, for the App settings page. */
+export const SteamCmdSettings = () => {
   const { status, task, install, update, cancel, dismissTask, forget } =
     useSteamCmd();
   const [changeOpen, setChangeOpen] = useState(false);
@@ -97,126 +73,71 @@ export const SteamCmdSettingsCard = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>SteamCMD</CardTitle>
-        <CardDescription>
-          Downloads and updates the Enshrouded dedicated server files.
-        </CardDescription>
-        <CardAction>
-          <Badge variant="success">
-            <BadgeDot />
+    <div className="space-y-8">
+      <DetailList className="border-y border-border/55">
+        <Detail label="Status">
+          <span className="flex items-center gap-2">
+            <StatusDot tone="success" />
             Ready
-          </Badge>
-        </CardAction>
-      </CardHeader>
+          </span>
+        </Detail>
+        <Detail label="Location">
+          <span
+            className="min-w-0 truncate font-mono text-xs"
+            title={executable}
+          >
+            {executable}
+          </span>
+          <RevealButton path={executable} label="Show in Explorer" />
+        </Detail>
+        <Detail label="Source">
+          {status.managed ? (
+            <span>
+              Downloaded by the app <Unknown>· kept updated for you</Unknown>
+            </span>
+          ) : (
+            <span>
+              Your own installation{" "}
+              <Unknown>· never changed by the app</Unknown>
+            </span>
+          )}
+        </Detail>
+        <Detail label="Last updated">
+          {status.lastUpdatedAt ? (
+            <Ago secs={status.lastUpdatedAt} />
+          ) : (
+            <Unknown>Not yet by the app</Unknown>
+          )}
+        </Detail>
+      </DetailList>
 
-      <CardContent className="space-y-5">
-        <dl className="space-y-3">
-          <Row label="Location">
-            <div className="flex items-center gap-2">
-              <span className="min-w-0 truncate font-mono text-xs">
-                {executable}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0"
-                aria-label="Show in Explorer"
-                onClick={() => void steamcmdApi().reveal(executable)}
-              >
-                <FolderOpenIcon className="size-3.5" />
-              </Button>
-            </div>
-          </Row>
-          <Row label="Source">
-            {status.managed ? (
-              <span>
-                Downloaded and managed by the app
-                <span className="text-muted-foreground">
-                  {" "}
-                  · updated and removed for you
-                </span>
-              </span>
-            ) : (
-              <span>
-                Your own installation
-                <span className="text-muted-foreground">
-                  {" "}
-                  · never modified or deleted by the app
-                </span>
-              </span>
-            )}
-          </Row>
-          <Row label="Last updated">
-            {status.lastUpdatedAt ? (
-              <time
-                dateTime={new Date(status.lastUpdatedAt * 1000).toISOString()}
-                title={new Date(status.lastUpdatedAt * 1000).toLocaleString()}
-              >
-                {formatDistanceToNow(status.lastUpdatedAt * 1000, {
-                  addSuffix: true,
-                })}
-              </time>
-            ) : (
-              <span className="text-muted-foreground">
-                Not yet updated by the app
-              </span>
-            )}
-          </Row>
-        </dl>
+      {ownTask ? (
+        <TaskProgress
+          task={ownTask}
+          onCancel={() => void cancel()}
+          onDismiss={dismissTask}
+          className="animate-rise-in"
+        />
+      ) : null}
 
-        {ownTask ? (
-          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">
-                {TASK_TITLES[ownTask.kind][ownTask.phase]}
-              </p>
-              {running ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void cancel()}
-                >
-                  Cancel
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  aria-label="Dismiss"
-                  onClick={dismissTask}
-                >
-                  <XIcon className="size-3.5" />
-                </Button>
-              )}
-            </div>
-            <TaskProgress task={ownTask} />
-            {ownTask.phase === "failed" && ownTask.error ? (
-              <Alert variant="destructive">
-                <TriangleAlertIcon />
-                <AlertTitle>That didn't work</AlertTitle>
-                <AlertDescription>{ownTask.error.message}</AlertDescription>
-              </Alert>
-            ) : null}
-          </div>
-        ) : null}
-      </CardContent>
-
-      <CardFooter className="flex-wrap gap-2 border-t">
-        <Button onClick={() => void runUpdate()} disabled={running}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={() => void runUpdate()}
+          disabled={running}
+        >
           <RefreshCwIcon data-icon="inline-start" />
           Check for updates
         </Button>
 
         <Dialog open={changeOpen} onOpenChange={setChangeOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" disabled={running}>
-              Change…
+            <Button variant="ghost" disabled={running}>
+              <FolderSearchIcon data-icon="inline-start" />
+              Use a different SteamCMD…
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle>Change SteamCMD</DialogTitle>
               <DialogDescription>
@@ -256,8 +177,8 @@ export const SteamCmdSettingsCard = () => {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              variant="ghost"
-              className="text-destructive sm:ml-auto"
+              variant="destructive-ghost"
+              className="ml-auto"
               disabled={running}
             >
               <Trash2Icon data-icon="inline-start" />
@@ -288,7 +209,7 @@ export const SteamCmdSettingsCard = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };

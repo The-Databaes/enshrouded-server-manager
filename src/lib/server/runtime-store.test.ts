@@ -5,6 +5,8 @@ import {
   applyStatus,
   createRuntimeStore,
   MAX_LOG_LINES,
+  MAX_USAGE_SAMPLES,
+  recordUsage,
 } from "@/lib/server/runtime-store";
 import type { LogLine, RuntimeStatus } from "@/lib/server/runtime-types";
 
@@ -40,6 +42,35 @@ describe("applyStatus", () => {
     const current = status(5, "running");
     expect(applyStatus(current, status(4, "starting"))).toBe(current);
     expect(applyStatus(current, status(6, "stopping")).phase).toBe("stopping");
+  });
+});
+
+describe("recordUsage", () => {
+  const withUsage = (phase: RuntimeStatus["phase"], cpuPercent: number) =>
+    ({
+      phase,
+      usage: { cpuPercent, memoryBytes: 1 },
+    }) as RuntimeStatus;
+
+  it("adds new readings and caps the history", () => {
+    const a = withUsage("running", 1);
+    const one = recordUsage([], null, a, 10);
+    expect(one).toEqual([{ at: 10, cpuPercent: 1, memoryBytes: 1 }]);
+    expect(
+      recordUsage(one, a, { ...a, revision: 2 } as RuntimeStatus, 20),
+    ).toBe(one);
+    let history = one;
+    for (let i = 0; i < MAX_USAGE_SAMPLES + 5; i++)
+      history = recordUsage(history, null, withUsage("running", i), i);
+    expect(history).toHaveLength(MAX_USAGE_SAMPLES);
+  });
+
+  it("starts over when the server starts again", () => {
+    const history = recordUsage([], null, withUsage("running", 3), 1);
+    const stopped = withUsage("stopped", 0);
+    expect(
+      recordUsage(history, stopped, { phase: "starting" } as RuntimeStatus, 2),
+    ).toEqual([]);
   });
 });
 

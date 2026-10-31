@@ -1,15 +1,21 @@
 import { RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { LogoMark } from "@/components/brand/logo";
+import { FlameBeacon } from "@/components/brand/flame-beacon";
 import { SteamCmdSetup } from "@/components/steamcmd/steamcmd-setup";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 
-const FullScreen = ({ children }: { children: React.ReactNode }) => (
-  <div className="shroud-mist flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center">
-    <LogoMark className="size-14 rounded-[12px] shadow-ember" />
+const FullScreen = ({
+  failed = false,
+  children,
+}: {
+  failed?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div className="flex min-h-full animate-page-in flex-col items-center justify-center gap-5 p-6 text-center">
+    <FlameBeacon state={failed ? "faltering" : "kindling"} />
     {children}
   </div>
 );
@@ -32,7 +38,7 @@ export const SteamCmdGate = ({ children }: { children: React.ReactNode }) => {
 
   if (!status && loadError) {
     return (
-      <FullScreen>
+      <FullScreen failed>
         <div className="max-w-md space-y-1">
           <p className="flex items-center justify-center gap-2 font-medium text-destructive">
             <TriangleAlertIcon className="size-4" />

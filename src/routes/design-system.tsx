@@ -17,9 +17,8 @@ import {
 } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
-
-import { PageHeader } from "@/components/app-shell/app-shell";
 import { BrandBanner, LogoMark } from "@/components/brand/logo";
+import { Page, PageHeader } from "@/components/layout/page";
 import {
   Accordion,
   AccordionContent,
@@ -242,7 +241,7 @@ const DesignSystem = () => {
   const [date, setDate] = useState<Date | undefined>(new Date(2026, 9, 10));
 
   return (
-    <>
+    <Page width="wide">
       <PageHeader
         title="Design System"
         description="Every shadcn component, themed dark-first for the void between the spires, with a sunlit parchment light theme."
@@ -1011,7 +1010,7 @@ const DesignSystem = () => {
           </div>
         </div>
       </Section>
-    </>
+    </Page>
   );
 };
 

@@ -1,7 +1,10 @@
 import { cn } from "cn";
 import { RotateCcwIcon } from "lucide-react";
 import { memo, useEffect, useId, useState } from "react";
-
+import {
+  SEGMENT,
+  SEGMENTED,
+} from "@/components/server-settings/control-styles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,21 +236,17 @@ const ChoiceControl = ({
     <div className="space-y-1">
       <ToggleGroup
         type="single"
-        variant="outline"
         size="sm"
+        spacing={0.5}
         value={value}
         // Clicking the selected option would clear it; a setting always has
         // a value.
         onValueChange={(v) => v && onChange(v)}
         aria-label={setting.label}
-        className="w-full"
+        className={SEGMENTED}
       >
         {options.map((o) => (
-          <ToggleGroupItem
-            key={o.value}
-            value={o.value}
-            className="flex-1 data-[state=on]:border-ember/50 data-[state=on]:bg-ember/12 data-[state=on]:text-ember"
-          >
+          <ToggleGroupItem key={o.value} value={o.value} className={SEGMENT}>
             {o.label}
           </ToggleGroupItem>
         ))}
@@ -288,12 +287,14 @@ export const WorldSettingRow = memo(
     return (
       <div
         className={cn(
-          "grid gap-x-6 gap-y-2 border-l-2 border-transparent py-3 pr-1 pl-3 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:items-center",
-          changed && "border-ember",
-          inactive && "opacity-60",
+          "relative grid gap-x-8 gap-y-2.5 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] md:items-center",
+          // An ember tick in the gutter marks unsaved edits.
+          "before:absolute before:top-4 before:bottom-4 before:-left-4 before:w-0.5 before:rounded-full before:bg-ember before:opacity-0 before:shadow-[0_0_8px_var(--ember)] before:transition-opacity",
+          changed && "before:opacity-100",
+          inactive && "opacity-55",
         )}
       >
-        <div className="min-w-0 space-y-0.5">
+        <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <label
               htmlFor={setting.kind === "toggle" ? id : undefined}
@@ -308,12 +309,10 @@ export const WorldSettingRow = memo(
               </Badge>
             ) : null}
             {changed ? (
-              <span className="text-[0.65rem] font-semibold tracking-wide text-ember uppercase">
-                Unsaved
-              </span>
+              <span className="eyebrow text-[0.6rem] text-ember">Unsaved</span>
             ) : null}
           </div>
-          <p className="text-xs text-pretty text-muted-foreground">
+          <p className="text-[0.8rem] text-pretty text-muted-foreground">
             {setting.description}
             {!isDefault ? (
               <span className="text-muted-foreground/80">

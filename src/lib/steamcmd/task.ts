@@ -227,6 +227,73 @@ export const progressSummary = (task: SteamCmdTask): string | null => {
   return parts.filter(Boolean).join(" · ");
 };
 
+export type ProgressFigures = {
+  /** 0–100, or `null` while there's nothing to measure. */
+  percent: number | null;
+  /** What's happening, capitalised ("Downloading", "Verifying install"). */
+  label: string | null;
+  /** Bytes done and in total, in network terms when they can be. */
+  done: number | null;
+  total: number | null;
+  /** Bytes per second, when it's real network transfer. */
+  rate: number | null;
+  /** Seconds left at the current rate. */
+  etaSecs: number | null;
+  /** `done`/`total` count data unpacked rather than downloaded. */
+  unpacked: boolean;
+};
+
+/**
+ * The same measurements as `progressSummary`, as separate figures for a
+ * progress display. App downloads are scaled to network bytes when
+ * SteamCMD's content log gave the real sizes (see `progressSummary`).
+ */
+export const progressFigures = (task: SteamCmdTask): ProgressFigures => {
+  const { percent, label, current, total, rate } = task.progress;
+  const plan = task.plan;
+  const figures: ProgressFigures = {
+    percent,
+    label: label ? capitalize(label) : null,
+    done: current,
+    total,
+    rate: null,
+    etaSecs: null,
+    unpacked: false,
+  };
+  if (label === "downloading" && current !== null) {
+    if (plan && plan.downloadTotal > 0 && plan.stageTotal > 0) {
+      const ratio = plan.downloadTotal / plan.stageTotal;
+      figures.done = Math.min(current * ratio, plan.downloadTotal);
+      figures.total = plan.downloadTotal;
+      figures.rate = rate ? rate * ratio : null;
+    } else {
+      figures.unpacked = true;
+    }
+  } else if (label !== null && NETWORK_LABELS.has(label)) {
+    figures.rate = rate;
+  }
+  if (
+    figures.rate &&
+    figures.rate > 0 &&
+    figures.done !== null &&
+    figures.total
+  ) {
+    figures.etaSecs = Math.max(
+      0,
+      (figures.total - figures.done) / figures.rate,
+    );
+  }
+  return figures;
+};
+
+/** e.g. "4 min left", "about 30 s left". */
+export const formatEta = (secs: number) => {
+  if (secs < 60) return `${Math.max(1, Math.round(secs / 5) * 5)} s left`;
+  if (secs < 3600) return `${Math.round(secs / 60)} min left`;
+  const hours = Math.floor(secs / 3600);
+  return `${hours} h ${Math.round((secs % 3600) / 60)} min left`;
+};
+
 /** Heading for a task card, by kind and outcome. */
 export const TASK_TITLES: Record<TaskKind, Record<TaskPhase, string>> = {
   install: {

@@ -7,6 +7,16 @@ import type { AppError } from "@/lib/steamcmd/types";
 /** Same cap as the backend's buffer (`MAX_LOG_LINES` in runtime.rs). */
 export const MAX_LOG_LINES = 5000;
 
+/** Resource samples kept for the dashboard's sparklines. */
+export const MAX_USAGE_SAMPLES = 90;
+
+export type UsageSample = {
+  /** Unix ms, when the sample arrived. */
+  at: number;
+  cpuPercent: number;
+  memoryBytes: number;
+};
+
 export type RuntimeState = {
   /** `null` until the first status arrives. */
   status: RuntimeStatus | null;
@@ -15,6 +25,8 @@ export type RuntimeState = {
   /** The server's own settings (name, port, …), when installed. */
   settings: ServerSettings | null;
   loadError: AppError | null;
+  /** CPU and memory of the current run, oldest first. */
+  usage: UsageSample[];
 };
 
 export const INITIAL_STATE: RuntimeState = {
@@ -22,6 +34,32 @@ export const INITIAL_STATE: RuntimeState = {
   log: [],
   settings: null,
   loadError: null,
+  usage: [],
+};
+
+/**
+ * Add `next`'s resource usage to the history when it brings a new reading.
+ * A new start begins a new history. Returns `history` itself when nothing
+ * changes.
+ */
+export const recordUsage = (
+  history: UsageSample[],
+  previous: RuntimeStatus | null,
+  next: RuntimeStatus,
+  now: number,
+): UsageSample[] => {
+  if (next.phase === "starting" && previous?.phase !== "starting") {
+    return history.length ? [] : history;
+  }
+  const usage = next.usage;
+  if (!usage || usage === previous?.usage) return history;
+  const sample = {
+    at: now,
+    cpuPercent: usage.cpuPercent,
+    memoryBytes: usage.memoryBytes,
+  };
+  const out = history.concat(sample);
+  return out.length > MAX_USAGE_SAMPLES ? out.slice(-MAX_USAGE_SAMPLES) : out;
 };
 
 /** Take `next` unless it's older than what we have (events can overtake
@@ -67,7 +105,9 @@ export const createRuntimeStore = (
     const previous = state.status?.phase;
     set((s) => {
       const next = applyStatus(s.status, status);
-      return next === s.status ? s : { ...s, status: next };
+      if (next === s.status) return s;
+      const usage = recordUsage(s.usage, s.status, next, Date.now());
+      return { ...s, status: next, usage };
     });
     // The server writes its settings file on first start, and the user may
     // edit it while it's stopped: re-read when it starts or stops.

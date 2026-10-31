@@ -8,16 +8,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Gold leaf: lit from above, with a bright top edge.
         default:
-          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),white_12%)]",
+          "gold-sheen text-primary-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/32%),0_1px_2px_0_oklch(0_0_0/30%),0_6px_20px_-8px_color-mix(in_oklch,var(--ember)_65%,transparent)] hover:brightness-110",
         outline:
-          "border-border bg-transparent text-foreground hover:border-shroud/50 hover:bg-accent hover:text-accent-foreground aria-expanded:border-shroud/50 aria-expanded:bg-accent aria-expanded:text-accent-foreground",
+          "border-border bg-foreground/[0.025] text-foreground hover:border-shroud/50 hover:bg-accent hover:text-accent-foreground aria-expanded:border-shroud/50 aria-expanded:bg-accent aria-expanded:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_6%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "text-foreground hover:bg-accent hover:text-accent-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-[color-mix(in_oklch,var(--destructive),white_10%)] focus-visible:ring-destructive/60",
+          "bg-destructive text-destructive-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/18%)] hover:bg-[color-mix(in_oklch,var(--destructive),white_10%)] focus-visible:ring-destructive/60",
+        /* Quiet destructive: red text that only fills on hover. */
+        "destructive-ghost":
+          "text-destructive hover:bg-destructive/12 focus-visible:ring-destructive/60",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
