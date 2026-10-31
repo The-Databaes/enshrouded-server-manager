@@ -25,9 +25,16 @@ export type QueryInfo = {
   maxPlayers: number;
 };
 
+/** From the server's console when it says; otherwise from queries, which
+ * only give names (if that). */
 export type OnlinePlayer = {
-  name: string;
-  connectedSecs: number;
+  name: string | null;
+  /** 64-bit, so kept as text. */
+  steamId: string | null;
+  /** The server's handle for the player this session, e.g. "0(0)". */
+  handle: string | null;
+  /** Unix ms. */
+  joinedAt: number;
 };
 
 export type RuntimeStatus = {
@@ -46,6 +53,7 @@ export type RuntimeStatus = {
   usage: Usage | null;
   totalMemoryBytes: number;
   query: QueryInfo | null;
+  /** Can briefly disagree with `query.players`: queries lag joins. */
   players: OnlinePlayer[];
   lastExit: ExitInfo | null;
   /** A server from the same folder that the manager didn't start. */

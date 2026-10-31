@@ -3,6 +3,7 @@
 
 pub mod a2s;
 pub mod commands;
+pub mod players;
 mod processes;
 pub mod runtime;
 pub mod settings;

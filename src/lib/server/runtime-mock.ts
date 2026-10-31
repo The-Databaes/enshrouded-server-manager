@@ -84,11 +84,29 @@ const write = (kind: LineKind, texts: string[]) => {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const randomPlayers = (count: number): OnlinePlayer[] =>
-  NAMES.slice(0, count).map((name, i) => ({
-    name,
-    connectedSecs: 600 + i * 1700,
-  }));
+/** The `i`th player to join, as the real server's console identifies them. */
+const mockPlayer = (i: number, joinedAt: number): OnlinePlayer => ({
+  name: NAMES[i],
+  steamId: `7656119840008${String(1236 + i * 311).padStart(4, "0")}`,
+  handle: `${i}(${i})`,
+  joinedAt,
+});
+
+/** Trimmed from what a real join and leave print. */
+const joinLines = (p: OnlinePlayer, i: number) => [
+  `[online] Added peer ${i}(${i + 1}) (steamid:${p.steamId})`,
+  `[session] Unable to find machine for peer ${i}(${i + 1}).`,
+  `[session] Add remote machine index ${i + 1} (id: ${809705657 + i}).`,
+  `[server] Machine '${i + 1}': Player '${p.handle}' logged in`,
+  `[server] Player '${p.name}' logged in with Permissions:`,
+  "         - CanAccessInventories",
+  "         - CanEditBase",
+];
+const leaveLines = (p: OnlinePlayer, i: number) => [
+  `[server] Remove Player '${p.name}'`,
+  `[online] Removed peer ${i}(${i + 1})`,
+  `[session] Player removed. Player handle: ${p.handle}`,
+];
 
 const tick = () => {
   if (status.phase !== "running" && status.phase !== "starting") return;
@@ -102,19 +120,25 @@ const tick = () => {
   };
   if (status.phase !== "running" || !status.query) return set({ usage });
   const drift = Math.random() < 0.15 ? (Math.random() < 0.5 ? -1 : 1) : 0;
-  const players = Math.max(0, Math.min(5, status.query.players + drift));
+  let players = status.players;
+  const last = players.length - 1;
+  if (drift > 0 && players.length < NAMES.length) {
+    const joined = mockPlayer(players.length, Date.now());
+    write("output", joinLines(joined, players.length));
+    players = [...players, joined];
+  } else if (drift < 0 && last >= 0) {
+    write("output", leaveLines(players[last], last));
+    players = players.slice(0, last);
+  }
   set({
     usage,
-    query: { ...status.query, players },
-    players: randomPlayers(players).map((p) => ({
-      ...p,
-      connectedSecs: p.connectedSecs + 2,
-    })),
+    query: { ...status.query, players: players.length },
+    players,
   });
   if (Math.random() < 0.2)
     write("output", [
       "-------------- Session ----------------",
-      `  m#0(128): up 0 (0), down 0 (0), remote ${players} (0), limit 256, lost 0, ping 34 ms`,
+      `  m#0(128): up 0 (0), down 0 (0), remote ${players.length} (0), limit 256, lost 0, ping 34 ms`,
       "---------------------------------------",
     ]);
 };
@@ -131,7 +155,9 @@ const goOnline = (startedAt: number, players = 0) => {
       players,
       maxPlayers: 16,
     },
-    players: randomPlayers(players),
+    players: Array.from({ length: players }, (_, i) =>
+      mockPlayer(i, Date.now() - (600 + i * 1700) * 1000),
+    ),
   });
 };
 

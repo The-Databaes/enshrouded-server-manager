@@ -5,7 +5,9 @@
 //! the wording of the server's log: the server is "running" once it answers
 //! queries ([`super::a2s`]), "stopped" once its process has exited, and it is
 //! stopped the way an admin would at its console, with Ctrl+Break, which
-//! makes it save the world first.
+//! makes it save the world first. The one exception is who the players are
+//! ([`super::players`]), which only the console says; if that stops working,
+//! the names queries return are shown instead.
 
 use std::collections::VecDeque;
 use std::net::{SocketAddr, UdpSocket};
@@ -17,6 +19,8 @@ use serde::Serialize;
 use tokio::sync::{mpsc, oneshot, watch};
 use tokio_util::sync::CancellationToken;
 
+pub use super::players::OnlinePlayer;
+use super::players::Roster;
 use super::processes::{self, Usage, UsageSampler};
 use super::settings::ServerSettings;
 use super::{a2s, SERVER_EXECUTABLE};
@@ -39,6 +43,10 @@ const QUERY_TIMEOUT: Duration = Duration::from_millis(1500);
 const UNRESPONSIVE_AFTER: u32 = 3;
 /// Console output is sent to the UI in batches at most this often.
 const LOG_FLUSH_INTERVAL: Duration = Duration::from_millis(100);
+/// When queries say nobody is on, players the console says joined longer
+/// ago than this are dropped (their leave was missed). Queries can lag a
+/// fresh join by a few seconds.
+const ROSTER_GRACE: Duration = Duration::from_secs(30);
 /// How long a big world gets to save before the server is forced to close.
 pub const STOP_TIMEOUT: Duration = Duration::from_mins(3);
 
@@ -84,13 +92,6 @@ pub struct QueryInfo {
   pub max_players: u8,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OnlinePlayer {
-  pub name: String,
-  pub connected_secs: u64,
-}
-
 /// Everything the UI shows about the running server. Pushed on every change
 /// as the `server://status` event.
 #[derive(Debug, Clone, Serialize)]
@@ -112,6 +113,8 @@ pub struct RuntimeStatus {
   pub usage: Option<Usage>,
   pub total_memory_bytes: u64,
   pub query: Option<QueryInfo>,
+  /// Who's on, from the console when it says; otherwise from queries (just
+  /// names, if the server shares them).
   pub players: Vec<OnlinePlayer>,
   pub last_exit: Option<ExitInfo>,
   /// A server running from the same folder that the manager didn't start.
@@ -186,7 +189,20 @@ struct Run {
   failed_queries: u32,
   usage: Option<Usage>,
   query: Option<QueryInfo>,
-  players: Vec<OnlinePlayer>,
+  /// The players the last query listed.
+  queried_players: Vec<OnlinePlayer>,
+  /// The players the console says are on.
+  roster: Roster,
+}
+
+impl Run {
+  fn players(&self) -> Vec<OnlinePlayer> {
+    if self.roster.is_empty() {
+      self.queried_players.clone()
+    } else {
+      self.roster.players()
+    }
+  }
 }
 
 struct State {
@@ -336,7 +352,8 @@ impl ServerRuntime {
         failed_queries: 0,
         usage: None,
         query: None,
-        players: Vec::new(),
+        queried_players: Vec::new(),
+        roster: Roster::default(),
       });
     });
     tauri::async_runtime::spawn(watch_process(
@@ -459,15 +476,46 @@ impl Shared {
 
   /// Apply a change, then tell the UI. Returns the new status.
   fn change(&self, f: impl FnOnce(&mut State)) -> RuntimeStatus {
+    self
+      .change_if(|s| {
+        f(s);
+        true
+      })
+      .unwrap_or_else(|| self.status())
+  }
+
+  /// Apply a change that may turn out not to change anything (`f` returns
+  /// whether it did); the UI is only told when it did.
+  fn change_if(&self, f: impl FnOnce(&mut State) -> bool) -> Option<RuntimeStatus> {
     let status = {
       let mut state = lock(&self.state);
-      f(&mut state);
+      if !f(&mut state) {
+        return None;
+      }
       state.revision += 1;
       self.phase.send_replace(state.phase);
       state.status(self.total_memory)
     };
     self.events.status(&status);
-    status
+    Some(status)
+  }
+
+  /// Show the console's output, and follow who joins and leaves in it.
+  fn console(&self, lines: Vec<String>) {
+    if lines.is_empty() {
+      return;
+    }
+    let at = now_ms();
+    self.change_if(|s| {
+      let mut changed = false;
+      if let Some(run) = s.run.as_mut() {
+        for line in &lines {
+          changed |= run.roster.observe(line, at);
+        }
+      }
+      changed
+    });
+    self.log(LineKind::Output, lines);
   }
 
   fn log(&self, kind: LineKind, texts: impl IntoIterator<Item = String>) {
@@ -545,7 +593,7 @@ impl State {
       usage: run.and_then(|r| r.usage),
       total_memory_bytes: total_memory,
       query: run.and_then(|r| r.query.clone()),
-      players: run.map(|r| r.players.clone()).unwrap_or_default(),
+      players: run.map(Run::players).unwrap_or_default(),
       last_exit: self.last_exit.clone(),
       external_pid: self.external_pid,
     }
@@ -573,11 +621,11 @@ async fn watch_process(
         None => break,
       },
       _ = flush.tick(), if !batch.is_empty() => {
-        shared.log(LineKind::Output, std::mem::take(&mut batch));
+        shared.console(std::mem::take(&mut batch));
       }
     }
   }
-  shared.log(LineKind::Output, batch);
+  shared.console(batch);
   let code = exit.await.ok().flatten();
   done.cancel();
   shared.finished(code);
@@ -641,7 +689,11 @@ async fn monitor(
         Some(Ok((info, players))) => {
           run.failed_queries = 0;
           if let Some(players) = players {
-            run.players = players;
+            run.queried_players = players;
+          }
+          if info.players == 0 {
+            let cutoff = now_ms().saturating_sub(ROSTER_GRACE.as_millis().try_into().unwrap_or(0));
+            run.roster.forget_joined_before(cutoff);
           }
           run.query = Some(info);
           if s.phase == Phase::Starting {
@@ -702,12 +754,15 @@ async fn query(address: SocketAddr) -> std::io::Result<(QueryInfo, Option<Vec<On
   } else {
     // The count alone is still useful if the list doesn't come back.
     a2s::players(address, QUERY_TIMEOUT).await.ok().map(|list| {
+      let now = now_ms();
       list
         .into_iter()
         .filter(|p| !p.name.is_empty())
         .map(|p| OnlinePlayer {
-          name: p.name,
-          connected_secs: p.duration.as_secs(),
+          name: Some(p.name),
+          steam_id: None,
+          handle: None,
+          joined_at: now.saturating_sub(u64::try_from(p.duration.as_millis()).unwrap_or(0)),
         })
         .collect()
     })

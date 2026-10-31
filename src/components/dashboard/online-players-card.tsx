@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useNow } from "@/hooks/use-now";
 import { useRuntimeStatus } from "@/hooks/use-server-runtime";
 import { formatDuration } from "@/lib/server/runtime-display";
 
@@ -23,12 +24,16 @@ const Notice = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-/** Who's connected, as the server reports it to Steam queries. */
+const Unknown = () => <span className="text-muted-foreground">—</span>;
+
+/** Who's connected, as the server's console (or its Steam queries) tells it. */
 export const OnlinePlayersCard = ({ className }: { className?: string }) => {
   const status = useRuntimeStatus();
   const running = status?.phase === "running";
-  const count = status?.query?.players ?? 0;
   const players = status?.players ?? [];
+  // Queries lag a fresh join by a few seconds; the console doesn't.
+  const count = Math.max(status?.query?.players ?? 0, players.length);
+  const now = useNow(15_000, running && players.length > 0);
 
   return (
     <Card className={className}>
@@ -48,34 +53,47 @@ export const OnlinePlayersCard = ({ className }: { className?: string }) => {
         ) : players.length === 0 ? (
           <Notice>
             {count === 1 ? "1 player is" : `${count} players are`} online. The
-            server didn't share their names.
+            server didn't share who.
           </Notice>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-6">Player</TableHead>
+                <TableHead>Steam ID</TableHead>
+                <TableHead>Handle</TableHead>
                 <TableHead className="pr-6 text-right">Connected for</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {players.map((player, i) => (
-                // Names aren't unique, and the server lists players in a
-                // stable order.
-                // biome-ignore lint/suspicious/noArrayIndexKey: see above
-                <TableRow key={`${i}-${player.name}`}>
+                // Without a handle or Steam ID (names from queries only),
+                // names needn't be unique; the list keeps a stable order.
+                <TableRow key={player.handle ?? player.steamId ?? i}>
                   <TableCell className="pl-6">
                     <div className="flex items-center gap-2">
                       <Avatar size="sm">
                         <AvatarFallback className="bg-ember/15 text-ember">
-                          {player.name.charAt(0).toUpperCase()}
+                          {player.name?.charAt(0).toUpperCase() ?? "?"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{player.name}</span>
+                      {player.name ? (
+                        <span className="font-medium">{player.name}</span>
+                      ) : (
+                        <span className="text-muted-foreground italic">
+                          Unnamed player
+                        </span>
+                      )}
                     </div>
                   </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {player.steamId ?? <Unknown />}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {player.handle ?? <Unknown />}
+                  </TableCell>
                   <TableCell className="pr-6 text-right tabular-nums text-muted-foreground">
-                    {formatDuration(player.connectedSecs * 1000)}
+                    {formatDuration(now - player.joinedAt)}
                   </TableCell>
                 </TableRow>
               ))}
