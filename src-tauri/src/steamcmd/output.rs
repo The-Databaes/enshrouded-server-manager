@@ -112,6 +112,18 @@ pub fn parse_update_started(line: &str, app_id: &str) -> Option<UpdatePlan> {
   })
 }
 
+/// A content log line saying Steam refused the file list ("manifest") of the
+/// build that's installed, e.g. `CDepotDownloadMgr::BYldRequestDepotManifest(
+/// App: 2278520, Depot: 2278521, Manifest: 2174…, branch: ): Failed to get
+/// manifest request code, 'Access Denied'`. SteamCMD needs that list to work
+/// out an update, so it stops without downloading anything. Seen when the
+/// server went to 1.0: Steam no longer served the old build's manifest.
+pub fn is_refused_manifest(line: &str, app_id: &str) -> bool {
+  line.contains("RequestDepotManifest")
+    && line.contains(&format!("App: {app_id},"))
+    && line.contains("Access Denied")
+}
+
 /// The verdict SteamCMD prints at the end of an `app_update`.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppUpdateResult {
@@ -155,6 +167,17 @@ fn explain_error(line: &str) -> String {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn spots_a_refused_manifest() {
+    let line = "[2026-10-31 17:01:54] CDepotDownloadMgr::BYldRequestDepotManifest(App: 2278520, Depot: 2278521, Manifest: 2174935030716737236, branch: ): Failed to get manifest request code, 'Access Denied'";
+    assert!(is_refused_manifest(line, "2278520"));
+    assert!(!is_refused_manifest(line, "228980"));
+    assert!(!is_refused_manifest(
+      "[2026-10-31 17:01:54] AppID 2278520 update canceled : Failed downloading 1 manifests (No connection)",
+      "2278520"
+    ));
+  }
 
   #[test]
   fn parses_self_update_progress() {

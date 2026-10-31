@@ -15,8 +15,10 @@ use std::time::Duration;
 
 use tokio_util::sync::CancellationToken;
 
-use crate::error::{Error, Result};
-use crate::steamcmd::output::{parse_app_update_result, parse_update_started, AppUpdateResult};
+use crate::error::{Error, IoContext, Result};
+use crate::steamcmd::output::{
+  is_refused_manifest, parse_app_update_result, parse_update_started, AppUpdateResult,
+};
 use crate::steamcmd::{run_streamed, SteamCmdEvent};
 
 /// Steam app ID of "Enshrouded Dedicated Server" (free, anonymous login).
@@ -35,11 +37,16 @@ pub struct Manifest {
 }
 
 impl Manifest {
-  pub fn read(install_dir: &Path) -> Option<Self> {
-    let path = install_dir
+  pub fn path(install_dir: &Path) -> PathBuf {
+    install_dir
       .join("steamapps")
-      .join(format!("appmanifest_{APP_ID}.acf"));
-    std::fs::read_to_string(path).ok().map(|t| Self::parse(&t))
+      .join(format!("appmanifest_{APP_ID}.acf"))
+  }
+
+  pub fn read(install_dir: &Path) -> Option<Self> {
+    std::fs::read_to_string(Self::path(install_dir))
+      .ok()
+      .map(|t| Self::parse(&t))
   }
 
   /// Pull the top-level fields we need out of the KeyValues ("VDF") text.
@@ -99,6 +106,75 @@ pub async fn app_update(
   cancel: &CancellationToken,
   emit: &impl Fn(SteamCmdEvent),
 ) -> Result<()> {
+  let mut validate = validate;
+  let mut retried_config = false;
+  let mut set_aside: Option<SetAsideManifest> = None;
+  loop {
+    let run = update_once(steamcmd, install_dir, validate, cancel, emit).await?;
+    match run.result {
+      Some(AppUpdateResult::Success) => {
+        if let Some(manifest) = set_aside {
+          manifest.discard();
+        }
+        return Ok(());
+      }
+      // "Missing configuration" happens when SteamCMD hasn't cached the
+      // app's details yet (typically its very first app_update); a second
+      // run works.
+      Some(AppUpdateResult::Failed(msg))
+        if !retried_config && msg.contains("Missing configuration") =>
+      {
+        retried_config = true;
+        emit(SteamCmdEvent::Log {
+          line: "Steam hadn't sent the server's details yet. Trying again…".into(),
+        });
+      }
+      // Steam refused the installed build's file list, so SteamCMD can't
+      // work out an update from it. Without the app manifest SteamCMD treats
+      // the folder as a new install: it checks the files already there
+      // against the new build and fetches what differs. Files that aren't
+      // part of the game (settings, saves, logs) are left alone.
+      _ if run.refused_manifest && set_aside.is_none() => {
+        set_aside = Some(SetAsideManifest::new(install_dir)?);
+        validate = true;
+        emit(SteamCmdEvent::Log {
+          line: "Steam no longer provides the file list of the installed build, so the update can't be worked out from it. Checking every file against the new build instead…".into(),
+        });
+      }
+      result => {
+        if let Some(manifest) = set_aside {
+          manifest.restore_if_unreplaced();
+        }
+        return Err(Error::SteamCmd(match result {
+          Some(AppUpdateResult::Failed(msg)) if msg.contains("Missing configuration") => {
+            "Steam still hadn't sent the server's details after a retry. Try again in a minute.".into()
+          }
+          Some(AppUpdateResult::Failed(msg)) => msg,
+          _ => format!(
+            "SteamCMD exited (code {}) without saying whether the server was installed. Check the console output.",
+            run.code
+          ),
+        }));
+      }
+    }
+  }
+}
+
+struct UpdateRun {
+  code: u32,
+  result: Option<AppUpdateResult>,
+  /// Steam refused the installed build's manifest.
+  refused_manifest: bool,
+}
+
+/// One SteamCMD `app_update` run.
+async fn update_once(
+  steamcmd: &Path,
+  install_dir: &Path,
+  validate: bool,
+  cancel: &CancellationToken,
+  emit: &impl Fn(SteamCmdEvent),
+) -> Result<UpdateRun> {
   let dir = install_dir.to_string_lossy();
   let mut args = vec![
     "+force_install_dir",
@@ -113,44 +189,58 @@ pub async fn app_update(
   }
   args.push("+quit");
 
-  // "Missing configuration" happens when SteamCMD hasn't cached the app's
-  // details yet (typically its very first app_update); a second run works.
-  for attempt in 1..=2 {
-    let mut result = None;
-    // The console only reports uncompressed bytes written; the real download
-    // size is in SteamCMD's content log, so follow that alongside.
-    let content_log = ContentLog::open(steamcmd);
-    let run_done = CancellationToken::new();
-    let run = async {
-      let code = run_streamed(steamcmd, &args, cancel, emit, |line| {
-        if let Some(r) = parse_app_update_result(line) {
-          result = Some(r);
-        }
-      })
-      .await;
-      run_done.cancel();
-      code
-    };
-    let (code, ()) = tokio::join!(run, content_log.watch(&run_done, emit));
-    let code = code?;
-    match result {
-      Some(AppUpdateResult::Success) => return Ok(()),
-      Some(AppUpdateResult::Failed(msg)) if attempt == 1 && msg.contains("Missing configuration") => {
-        emit(SteamCmdEvent::Log {
-          line: "Steam hadn't sent the server's details yet. Trying again…".into(),
-        });
+  let mut result = None;
+  // The console only reports uncompressed bytes written; the real download
+  // size is in SteamCMD's content log, so follow that alongside.
+  let content_log = ContentLog::open(steamcmd);
+  let run_done = CancellationToken::new();
+  let run = async {
+    let code = run_streamed(steamcmd, &args, cancel, emit, |line| {
+      if let Some(r) = parse_app_update_result(line) {
+        result = Some(r);
       }
-      Some(AppUpdateResult::Failed(msg)) => return Err(Error::SteamCmd(msg)),
-      None => {
-        return Err(Error::SteamCmd(format!(
-          "SteamCMD exited (code {code}) without saying whether the server was installed. Check the console output."
-        )))
-      }
+    })
+    .await;
+    run_done.cancel();
+    code
+  };
+  let (code, refused_manifest) = tokio::join!(run, content_log.watch(&run_done, emit));
+  Ok(UpdateRun {
+    code: code?,
+    result,
+    refused_manifest,
+  })
+}
+
+/// The app manifest, moved out of SteamCMD's way while it reinstalls over the
+/// existing files.
+struct SetAsideManifest {
+  path: PathBuf,
+  aside: PathBuf,
+}
+
+impl SetAsideManifest {
+  fn new(install_dir: &Path) -> Result<Self> {
+    let path = Manifest::path(install_dir);
+    let aside = path.with_extension("acf.stale");
+    std::fs::rename(&path, &aside).at("set aside", &path)?;
+    Ok(Self { path, aside })
+  }
+
+  fn discard(self) {
+    let _ = std::fs::remove_file(&self.aside);
+  }
+
+  /// SteamCMD writes a new manifest as soon as it starts installing; if it
+  /// failed before that, put the old one back so the install still shows its
+  /// build.
+  fn restore_if_unreplaced(self) {
+    if self.path.exists() {
+      self.discard();
+    } else {
+      let _ = std::fs::rename(&self.aside, &self.path);
     }
   }
-  Err(Error::SteamCmd(
-    "Steam still hadn't sent the server's details after a retry. Try again in a minute.".into(),
-  ))
 }
 
 /// Follows `logs/content_log.txt` next to SteamCMD from the point a job
@@ -171,8 +261,10 @@ impl ContentLog {
     Self { path, offset }
   }
 
-  async fn watch(mut self, done: &CancellationToken, emit: &impl Fn(SteamCmdEvent)) {
+  /// Returns whether Steam refused the installed build's manifest.
+  async fn watch(mut self, done: &CancellationToken, emit: &impl Fn(SteamCmdEvent)) -> bool {
     let mut pending = String::new();
+    let mut refused_manifest = false;
     loop {
       // Read once more after SteamCMD exits so nothing logged at the end is missed.
       let finished = done.is_cancelled();
@@ -183,9 +275,10 @@ impl ContentLog {
             stage_total: plan.stage_total,
           });
         }
+        refused_manifest |= is_refused_manifest(&line, APP_ID);
       }
       if finished {
-        break;
+        return refused_manifest;
       }
       tokio::select! {
         () = done.cancelled() => {}
@@ -285,6 +378,39 @@ mod tests {
       }
     );
     assert!(m.is_complete());
+  }
+
+  /// Updates a server copy with SteamCMD. To check the refused-manifest
+  /// recovery, give the copy a manifest from a build Steam no longer serves.
+  /// ```text
+  /// ESM_TEST_STEAMCMD=…\steamcmd.exe ESM_TEST_SERVER_DIR=…\server-copy
+  ///   cargo test -- --ignored live_app_update --nocapture
+  /// ```
+  #[tokio::test]
+  #[ignore = "runs SteamCMD against Valve's servers"]
+  async fn live_app_update() -> Result<()> {
+    let (Some(steamcmd), Some(dir)) = (
+      std::env::var_os("ESM_TEST_STEAMCMD").map(PathBuf::from),
+      std::env::var_os("ESM_TEST_SERVER_DIR").map(PathBuf::from),
+    ) else {
+      eprintln!("ESM_TEST_STEAMCMD or ESM_TEST_SERVER_DIR isn't set; skipping");
+      return Ok(());
+    };
+    app_update(
+      &steamcmd,
+      &dir,
+      false,
+      &CancellationToken::new(),
+      &|event| {
+        if let SteamCmdEvent::Log { line } = event {
+          println!("{line}");
+        }
+      },
+    )
+    .await?;
+    assert!(Manifest::read(&dir).is_some_and(|m| m.is_complete()));
+    assert!(!Manifest::path(&dir).with_extension("acf.stale").exists());
+    Ok(())
   }
 
   #[test]

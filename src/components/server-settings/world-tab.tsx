@@ -103,7 +103,7 @@ type WorldTabProps = {
   onChange: (update: (doc: SettingsDoc) => SettingsDoc) => void;
 };
 
-/** Difficulty preset and the 37 world settings. */
+/** Difficulty preset and the 38 world settings. */
 export const WorldTab = ({ saved, draft, onChange }: WorldTabProps) => {
   const [query, setQuery] = useState("");
   const [onlyAdjusted, setOnlyAdjusted] = useState(false);

@@ -3,9 +3,11 @@
  * ranges the server clamps to, the exact words it accepts, defaults and the
  * difficulty presets.
  *
- * Sources: the file the current server build writes on start (all keys,
- * their order and defaults), and Survival Servers' tested settings page
- * (ranges and preset values):
+ * Sources, checked against server 1.0.0.0 (Steam build 26083076): the file
+ * the server writes on start (all keys, their order and defaults), the
+ * effective values it logs at start (the ranges it clamps to, and every
+ * preset's values), and its readme (`enshrouded_server_readme.txt`). Before
+ * 1.0, Survival Servers' tested settings page:
  * https://www.survivalservers.com/wiki/Enshrouded_Server_Settings
  *
  * Words matter: a misspelled preset, option or tag stops the server, so
@@ -37,6 +39,14 @@ export type DurationSetting = Base & {
   default: number;
 };
 
+/** A whole number, such as a Flame level. */
+export type LevelSetting = Base & {
+  kind: "level";
+  min: number;
+  max: number;
+  default: number;
+};
+
 export type ToggleSetting = Base & {
   kind: "toggle";
   default: boolean;
@@ -57,6 +67,7 @@ export type ChoiceSetting = Base & {
 export type WorldSetting =
   | FactorSetting
   | DurationSetting
+  | LevelSetting
   | ToggleSetting
   | ChoiceSetting;
 
@@ -87,6 +98,18 @@ const AMOUNT_OPTIONS: ChoiceOption[] = [
   { value: "Extreme", label: "Most", description: "Three times as many" },
 ];
 
+/** Enemy amount also has Automatic (1.0), in the order the readme lists. */
+const ENEMY_AMOUNT_OPTIONS: ChoiceOption[] = [
+  ...AMOUNT_OPTIONS.slice(0, 2),
+  {
+    value: "Automatic",
+    label: "Automatic",
+    description:
+      "Scales with the party: more enemies the more players are nearby",
+  },
+  ...AMOUNT_OPTIONS.slice(2),
+];
+
 export type SettingGroup = {
   id: string;
   title: string;
@@ -94,7 +117,7 @@ export type SettingGroup = {
   settings: WorldSetting[];
 };
 
-/** The 37 world settings under `gameSettings`, grouped as in the game. */
+/** The 38 world settings under `gameSettings`, grouped as in the game. */
 export const WORLD_SETTING_GROUPS: SettingGroup[] = [
   {
     id: "player",
@@ -290,8 +313,8 @@ export const WORLD_SETTING_GROUPS: SettingGroup[] = [
         key: "randomSpawnerAmount",
         label: "Enemy amount",
         description: "How many enemies spawn.",
-        default: "Normal",
-        options: AMOUNT_OPTIONS,
+        default: "Automatic",
+        options: ENEMY_AMOUNT_OPTIONS,
       },
       {
         kind: "choice",
@@ -301,12 +324,13 @@ export const WORLD_SETTING_GROUPS: SettingGroup[] = [
         default: "Normal",
         options: AMOUNT_OPTIONS,
       },
+      // 1.0 reworked this slider: the server now caps it at 2.5 (was 5).
       factor(
         "enemyDamageFactor",
         "Enemy damage",
         "Damage enemies deal.",
         0.25,
-        5,
+        2.5,
       ),
       factor("enemyHealthFactor", "Enemy health", "Enemy health.", 0.25, 4),
       factor(
@@ -350,7 +374,8 @@ export const WORLD_SETTING_GROUPS: SettingGroup[] = [
   {
     id: "world",
     title: "World",
-    description: "Day and night, weather, fishing, gliding and taming.",
+    description:
+      "Day and night, weather, the Shroud, fishing, gliding and taming.",
     settings: [
       {
         kind: "duration",
@@ -382,6 +407,18 @@ export const WORLD_SETTING_GROUPS: SettingGroup[] = [
           { value: "Normal", label: "Normal" },
           { value: "Often", label: "Often" },
         ],
+      },
+      {
+        // New in 1.0. The readme says 0-20, but the server plays 1-11: it
+        // lowers higher values to 11 and raises 0 to 1.
+        kind: "level",
+        key: "flameLevelFogRemoval",
+        label: "Flame Altars in the Shroud",
+        description:
+          "The Flame level needed to place Flame Altars inside the Shroud and push it back.",
+        min: 1,
+        max: 11,
+        default: 11,
       },
       {
         kind: "choice",
@@ -467,16 +504,23 @@ const SERVER_KEY_ORDER = [
   "dayTimeDuration",
   "nightTimeDuration",
   "curseModifier",
+  "flameLevelFogRemoval",
 ];
 
 /** How a setting is written in the file (durations in nanoseconds). */
 export const toFileValue = (
   setting: WorldSetting,
   value: WorldSettingValue,
-): WorldSettingValue =>
-  setting.kind === "duration"
-    ? Math.round(Number(value) * NS_PER_MINUTE)
-    : value;
+): WorldSettingValue => {
+  switch (setting.kind) {
+    case "duration":
+      return Math.round(Number(value) * NS_PER_MINUTE);
+    case "level":
+      return Math.round(Number(value));
+    default:
+      return value;
+  }
+};
 
 /** How the editor shows a value read from the file. */
 export const fromFileValue = (
@@ -485,6 +529,7 @@ export const fromFileValue = (
 ): WorldSettingValue | undefined => {
   switch (setting.kind) {
     case "factor":
+    case "level":
       return typeof value === "number" && Number.isFinite(value)
         ? value
         : undefined;
@@ -593,7 +638,7 @@ const PRESET_CHANGES: Record<PresetName, Record<string, WorldSettingValue>> = {
     experienceCombatFactor: 0.5,
     experienceMiningFactor: 0.5,
     randomSpawnerAmount: "Many",
-    enemyDamageFactor: 1.5,
+    enemyDamageFactor: 1.25,
     threatBonus: 1.5,
     bossHealthFactor: 1.5,
   },

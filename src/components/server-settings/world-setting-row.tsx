@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/tooltip";
 import type { ValueSource } from "@/lib/server/settings-editor";
 import type {
+  ChoiceOption,
   ChoiceSetting,
   DurationSetting,
   FactorSetting,
+  LevelSetting,
   WorldSetting,
   WorldSettingValue,
 } from "@/lib/server/settings-schema";
@@ -41,6 +43,8 @@ const formatWorldValue = (
       return `${Math.round(Number(value) * 100)}%`;
     case "duration":
       return `${Math.round(Number(value) * 10) / 10} min`;
+    case "level":
+      return `Level ${value}`;
     case "toggle":
       return value ? "On" : "Off";
     case "choice":
@@ -62,7 +66,7 @@ const NumberField = ({
   value: number;
   min: number;
   max: number;
-  unit: string;
+  unit?: string;
   label: string;
   onCommit: (value: number) => void;
 }) => {
@@ -88,11 +92,13 @@ const NumberField = ({
           if (e.key === "Enter") commit();
           if (e.key === "Escape") setText(String(value));
         }}
-        className="h-8 pr-7 text-right tabular-nums"
+        className={cn("h-8 text-right tabular-nums", unit && "pr-7")}
       />
-      <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground">
-        {unit}
-      </span>
+      {unit ? (
+        <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground">
+          {unit}
+        </span>
+      ) : null}
     </div>
   );
 };
@@ -155,6 +161,39 @@ const DurationControl = ({
   </div>
 );
 
+const LevelControl = ({
+  setting,
+  value,
+  onChange,
+}: {
+  setting: LevelSetting;
+  value: number;
+  onChange: (value: number) => void;
+}) => (
+  <div className="flex items-center gap-3">
+    <Slider
+      min={setting.min}
+      max={setting.max}
+      step={1}
+      value={[value]}
+      onValueChange={([v]) => onChange(v)}
+      aria-label={setting.label}
+    />
+    <NumberField
+      value={value}
+      min={setting.min}
+      max={setting.max}
+      label={setting.label}
+      onCommit={(v) => onChange(Math.round(v))}
+    />
+  </div>
+);
+
+const OptionDescription = ({ option }: { option?: ChoiceOption }) =>
+  option?.description ? (
+    <p className="text-xs text-muted-foreground">{option.description}</p>
+  ) : null;
+
 const ChoiceControl = ({
   setting,
   value,
@@ -166,27 +205,30 @@ const ChoiceControl = ({
 }) => {
   const known = setting.options.some((o) => o.value === value);
   // A word from a newer server is kept selectable rather than lost.
-  const options = known
+  const options: ChoiceOption[] = known
     ? setting.options
     : [...setting.options, { value, label: `${value} (from the file)` }];
+  const selected = options.find((o) => o.value === value);
 
   if (options.length > MAX_SEGMENTS) {
     return (
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full" aria-label={setting.label}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="space-y-1">
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="w-full" aria-label={setting.label}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <OptionDescription option={selected} />
+      </div>
     );
   }
-  const selected = options.find((o) => o.value === value);
   return (
     <div className="space-y-1">
       <ToggleGroup
@@ -210,9 +252,7 @@ const ChoiceControl = ({
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      {selected && "description" in selected && selected.description ? (
-        <p className="text-xs text-muted-foreground">{selected.description}</p>
-      ) : null}
+      <OptionDescription option={selected} />
     </div>
   );
 };
@@ -294,6 +334,12 @@ export const WorldSettingRow = memo(
               />
             ) : setting.kind === "duration" ? (
               <DurationControl
+                setting={setting}
+                value={Number(value)}
+                onChange={set}
+              />
+            ) : setting.kind === "level" ? (
+              <LevelControl
                 setting={setting}
                 value={Number(value)}
                 onChange={set}

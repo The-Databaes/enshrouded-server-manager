@@ -13,6 +13,7 @@ import {
   defaultDocument,
   defaultGameSettings,
   NS_PER_MINUTE,
+  presetValue,
   WORLD_SETTINGS,
   WORLD_SETTINGS_BY_KEY,
   type WorldSetting,
@@ -33,11 +34,11 @@ const serverFile = (): SettingsDoc => ({
 });
 
 describe("schema", () => {
-  it("covers all 37 world settings with defaults inside their ranges", () => {
-    expect(WORLD_SETTINGS).toHaveLength(37);
-    expect(Object.keys(defaultGameSettings())).toHaveLength(37);
+  it("covers all 38 world settings with defaults inside their ranges", () => {
+    expect(WORLD_SETTINGS).toHaveLength(38);
+    expect(Object.keys(defaultGameSettings())).toHaveLength(38);
     for (const s of WORLD_SETTINGS) {
-      if (s.kind === "factor" || s.kind === "duration") {
+      if (s.kind === "factor" || s.kind === "duration" || s.kind === "level") {
         expect(s.default).toBeGreaterThanOrEqual(s.min);
         expect(s.default).toBeLessThanOrEqual(s.max);
       }
@@ -46,6 +47,16 @@ describe("schema", () => {
       }
     }
     expect(defaultGameSettings().dayTimeDuration).toBe(30 * NS_PER_MINUTE);
+  });
+
+  it("matches what server 1.0 writes into a new file", () => {
+    const keys = Object.keys(defaultGameSettings());
+    expect(keys.at(-1)).toBe("flameLevelFogRemoval");
+    expect(defaultGameSettings()).toMatchObject({
+      randomSpawnerAmount: "Automatic",
+      aggroPoolAmount: "Normal",
+      flameLevelFogRemoval: 11,
+    });
   });
 
   it("starts a new file with the four roles and unique passwords", () => {
@@ -73,6 +84,17 @@ describe("presets", () => {
     expect(worldValue(custom, setting("nightTimeDuration")).value).toBe(12);
   });
 
+  it("plays the values server 1.0 logs for each preset", () => {
+    expect(presetValue("Default", setting("randomSpawnerAmount"))).toBe(
+      "Automatic",
+    );
+    expect(presetValue("Hard", setting("enemyDamageFactor"))).toBe(1.25);
+    expect(presetValue("Survival", setting("enemyDamageFactor"))).toBe(1.5);
+    for (const preset of ["Default", "Relaxed", "Hard", "Survival"] as const) {
+      expect(presetValue(preset, setting("flameLevelFogRemoval"))).toBe(11);
+    }
+  });
+
   it("switches to Custom on an edit, keeping the preset's other values", () => {
     const edited = setWorldValue(serverFile(), setting("bossHealthFactor"), 3);
     expect(edited.gameSettingsPreset).toBe("Custom");
@@ -93,6 +115,10 @@ describe("presets", () => {
     expect(
       (noisy.gameSettings as Record<string, unknown>).enemyDamageFactor,
     ).toBe(0.3);
+    const level = setWorldValue(doc, setting("flameLevelFogRemoval"), 6.4);
+    expect(
+      (level.gameSettings as Record<string, unknown>).flameLevelFogRemoval,
+    ).toBe(6);
   });
 });
 

@@ -83,16 +83,22 @@ The **Server Settings** page edits `enshrouded_server.json`:
 
 - **General:** name, player slots, server-list tags, text and voice chat, and (under Advanced)
   the query port, listen address and save/log folders.
-- **World and difficulty:** the five presets, and all 37 world settings in the game's groups. Each
+- **World and difficulty:** the five presets, and all 38 world settings in the game's groups. Each
   has a description, the range the server accepts, its default and a reset button. Factors show
   as percentages, as in the game. Day, night and hunger times show in minutes and are written in
-  the nanoseconds the server expects.
+  the nanoseconds the server expects. The Flame level for Flame Altars in the Shroud is a whole
+  number from 1 to 11.
 - **Roles and bans:** passwords (show, copy, generate), the five permissions and reserved slots
   for each role, adding roles from the standard templates, and lifting bans.
 - **File:** exactly which changes will be written, and the resulting file.
 
-A few rules come from how the server behaves, checked against the current build and
-[Survival Servers' tested settings reference](https://www.survivalservers.com/wiki/Enshrouded_Server_Settings):
+A few rules come from how the server behaves. They were checked against server 1.0.0.0 (Steam build
+26083076): the file it writes, and the effective values it logs at start for each preset and for
+out-of-range values. Before 1.0 they were checked against
+[Survival Servers' tested settings reference](https://www.survivalservers.com/wiki/Enshrouded_Server_Settings).
+The server's readme isn't always right: it gives `flameLevelFogRemoval` as 0–20, but the server
+plays 1–11, and its sample file still shows `"randomSpawnerAmount": "Normal"`, though new files
+get `"Automatic"`.
 
 - **Unless the preset is Custom, the server ignores every world setting** and plays the preset's
   own values. The editor shows the preset's values and marks what the preset changes. Changing
