@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -67,6 +67,24 @@ describe("SteamCmdGate", () => {
     });
     renderGate();
     expect(await screen.findByText("the app")).toBeInTheDocument();
+  });
+
+  it("says so when the backend doesn't answer", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(api.status as SteamCmdApi["status"]).mockReturnValue(
+        new Promise(() => {}),
+      );
+      renderGate();
+      expect(screen.getByText("Kindling the Flame…")).toBeInTheDocument();
+      await act(() => vi.advanceTimersByTimeAsync(8000));
+      expect(
+        screen.getByText("The app's background service isn't answering"),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Try again/ })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("blocks the app until an existing install is chosen", async () => {

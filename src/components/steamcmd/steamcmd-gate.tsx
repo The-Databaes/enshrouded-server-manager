@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 
+/** How long the first status call may take before the screen says so. */
+const SLOW_START_MS = 8000;
+
 const FullScreen = ({
   failed = false,
   children,
@@ -36,6 +39,19 @@ export const SteamCmdGate = ({ children }: { children: React.ReactNode }) => {
     if (status && !ready) setHoldSetup(true);
   }, [status, ready]);
 
+  // The first call normally answers at once. If it hasn't after a while,
+  // say so instead of spinning forever.
+  const waiting = !status && !loadError;
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!waiting) {
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), SLOW_START_MS);
+    return () => clearTimeout(timer);
+  }, [waiting]);
+
   if (!status && loadError) {
     return (
       <FullScreen failed>
@@ -50,6 +66,32 @@ export const SteamCmdGate = ({ children }: { children: React.ReactNode }) => {
           <RotateCcwIcon data-icon="inline-start" />
           Try again
         </Button>
+      </FullScreen>
+    );
+  }
+
+  if (!status && slow) {
+    return (
+      <FullScreen failed>
+        <div className="max-w-md space-y-1.5">
+          <p className="font-medium">
+            The app's background service isn't answering
+          </p>
+          <p className="text-sm text-pretty text-muted-foreground">
+            It normally replies at once. Try again, or reload the window. If it
+            stays stuck, close the app completely (check Task Manager for a
+            leftover copy) and open it again.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => void refresh()}>
+            <RotateCcwIcon data-icon="inline-start" />
+            Try again
+          </Button>
+          <Button variant="ghost" onClick={() => window.location.reload()}>
+            Reload window
+          </Button>
+        </div>
       </FullScreen>
     );
   }

@@ -94,7 +94,8 @@ const Appearance = () => {
   return (
     <RadioGroupPrimitive.Root
       aria-label="Theme"
-      value={mounted ? theme : undefined}
+      // Always controlled: "" until the theme is known on the client.
+      value={(mounted && theme) || ""}
       onValueChange={setTheme}
       className="grid gap-4 sm:grid-cols-3"
     >
