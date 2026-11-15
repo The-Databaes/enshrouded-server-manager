@@ -184,7 +184,7 @@ const Figure = ({
   children: React.ReactNode;
 }) => (
   <div className="min-w-0 space-y-1">
-    <dt className="eyebrow text-[0.6rem]">{label}</dt>
+    <dt className="eyebrow">{label}</dt>
     <dd className="truncate text-sm font-medium tabular-nums">{children}</dd>
   </div>
 );

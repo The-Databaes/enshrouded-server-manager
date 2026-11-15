@@ -192,7 +192,7 @@ const Dashboard = () => {
   if (files.state === "notInstalled") return <FirstSteps />;
 
   return (
-    <Page width="wide" className="gap-10">
+    <Page width="wide" className="gap-8">
       <ServerHero
         files={files}
         blockedReason={startBlocker(files, task, runtime)}
@@ -202,12 +202,12 @@ const Dashboard = () => {
 
       <Vitals history={history} />
 
-      <div className="grid gap-x-14 gap-y-12 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 space-y-12">
-          <PlayerActivity history={history} />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-4">
+          <PlayerActivity history={history} variant="panel" />
           <OnlinePlayers />
         </div>
-        <div className="min-w-0 space-y-12">
+        <div className="min-w-0 space-y-4">
           <ConsolePeek />
           <ServerDetails files={files} />
         </div>

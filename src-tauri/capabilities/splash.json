@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "splash",
+  "description": "The splash window: it can only be dragged around",
+  "windows": ["splashscreen"],
+  "permissions": ["core:window:allow-start-dragging"]
+}

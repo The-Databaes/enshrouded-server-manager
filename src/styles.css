@@ -91,6 +91,9 @@
   --firelight: oklch(0.7988 0.1314 81.37); /* #E8B44F highlight */
   --stone: oklch(0.6204 0.0311 303.63); /* #8A8296 masonry */
 
+  /* panels lift gently off parchment */
+  --panel-shadow: 0 6px 18px -14px oklch(0.25 0.05 299 / 35%);
+
   /* gold leaf text: darker on parchment so it holds contrast */
   --gild-from: var(--ember);
   --gild-to: oklch(0.47 0.11 60);
@@ -146,6 +149,8 @@
   --firelight: oklch(0.9242 0.0867 87); /* #FFE3A3 */
   --stone: oklch(0.5159 0.0319 298.99); /* #6A6478 */
 
+  --panel-shadow: 0 10px 30px -18px oklch(0 0 0 / 60%);
+
   --gild-from: var(--firelight);
   --gild-to: oklch(from var(--ember) calc(l - 0.04) c h);
 }
@@ -154,8 +159,9 @@
   --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
   --font-display: "Cinzel Variable", Georgia, serif;
-  /* Titles of cards, dialogs, alerts and sheets are set in Cinzel. */
-  --font-heading: var(--font-display);
+  /* Titles of cards, dialogs, alerts and sheets are set in Barlow: Cinzel
+     is kept for page titles and the server name (see h1 below). */
+  --font-heading: var(--font-sans);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -358,11 +364,16 @@
     margin: 0;
   }
 
-  h1,
-  h2,
-  h3 {
+  /* Cinzel is for display only: page titles and the server's name. Section
+     headings are set in Barlow, so a page has one ornamental voice. */
+  h1 {
     font-family: var(--font-display);
     letter-spacing: 0.02em;
+  }
+
+  h2,
+  h3 {
+    letter-spacing: -0.005em;
   }
 
   button:not(:disabled),
@@ -445,6 +456,24 @@
       color-mix(in oklch, var(--ember) 14%, transparent),
       transparent 70%
     );
+}
+
+/* A panel: a quiet tonal surface that groups related data (dashboard
+   tiles, the chart, lists beside it). Forms and settings stay open; use a
+   panel only where things belong together and sit beside other groups. */
+@utility panel {
+  position: relative;
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+  background-color: color-mix(in oklch, var(--card) 72%, transparent);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--foreground) 2.5%, transparent),
+    transparent 96px
+  );
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 3.5%),
+    var(--panel-shadow);
 }
 
 /* Raised stone: a faint sheen at the top of a surface. */
@@ -587,11 +616,12 @@
   color: transparent;
 }
 
-/* Small caps label above a heading ("eyebrow"). */
+/* Small caps label above a heading ("eyebrow"). 12px is the floor for
+   any text in the app. */
 @utility eyebrow {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
@@ -604,4 +634,430 @@
     color-mix(in oklch, var(--primary), white 14%),
     var(--primary) 70%
   );
+}
+
+/* The Flame altar (components/brand/flame-beacon.tsx) ------------------ */
+
+/* Brand art, so fixed colours rather than theme tokens: the altar is the
+   same carved stone on parchment and in the void. Each state sets the
+   flame's palette; the flame itself grows, gutters or dies between them. */
+@layer components {
+  .altar {
+    --altar-o1: #e8712a;
+    --altar-o2: #ffc65c;
+    --altar-m1: #ffb347;
+    --altar-m2: #ffe3a3;
+    --altar-core: #fff6dc;
+    --altar-glow: #ffb74d;
+    --altar-rune: #e8a33d;
+    --altar-rim: #ffd08a;
+    --altar-flame-scale: 1;
+    --altar-flame-opacity: 1;
+    --altar-lit-opacity: 0.45;
+    --altar-ring-opacity: 0.55;
+
+    & stop,
+    & .altar-ring,
+    & .altar-rim,
+    & .altar-edge-light,
+    & .altar-step-light,
+    & .altar-seal,
+    & .altar-bay,
+    & .altar-bay-knob,
+    & .altar-bloom,
+    & .altar-basin-glow,
+    & .altar-coals,
+    & .altar-halo,
+    & .altar-mist,
+    & .altar-flame-core {
+      transition:
+        stop-color 0.8s ease,
+        stop-opacity 0.8s ease,
+        stroke 0.8s ease,
+        fill 0.8s ease,
+        opacity 0.8s ease;
+    }
+
+    & .altar-stop-o1 {
+      stop-color: var(--altar-o1);
+    }
+    & .altar-stop-o2 {
+      stop-color: var(--altar-o2);
+    }
+    & .altar-stop-m1 {
+      stop-color: var(--altar-m1);
+    }
+    & .altar-stop-m2 {
+      stop-color: var(--altar-m2);
+    }
+    & .altar-stop-glow {
+      stop-color: var(--altar-glow);
+    }
+    & .altar-stop-lit {
+      stop-color: var(--altar-glow);
+      stop-opacity: var(--altar-lit-opacity);
+    }
+
+    & .altar-flame {
+      transform-box: view-box;
+      transform-origin: 100px 126px;
+      transform: scale(var(--altar-flame-scale));
+      opacity: var(--altar-flame-opacity);
+      transition:
+        transform 0.9s cubic-bezier(0.3, 0.7, 0.2, 1),
+        opacity 0.7s ease;
+    }
+    & .altar-flame-motion {
+      transform-box: view-box;
+      transform-origin: 100px 126px;
+    }
+    & .altar-flame-outer,
+    & .altar-flame-middle,
+    & .altar-flame-core {
+      transform-box: view-box;
+      transform-origin: 100px 126px;
+      animation: altar-lick 2.3s ease-in-out infinite;
+    }
+    & .altar-flame-middle {
+      animation-duration: 1.7s;
+      animation-direction: reverse;
+    }
+    & .altar-flame-core {
+      fill: var(--altar-core);
+      animation-duration: 1.3s;
+      animation-delay: -0.4s;
+    }
+    & .altar-tongue {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+      animation: altar-tongue 1.9s ease-in-out infinite;
+    }
+    & .altar-tongue-left {
+      --tongue-lean: 5deg;
+      animation-duration: 2.4s;
+      animation-delay: -0.8s;
+    }
+    & .altar-bloom {
+      fill: var(--altar-glow);
+      opacity: 0.5;
+    }
+    & .altar-halo {
+      transform-box: view-box;
+      transform-origin: 100px 92px;
+      animation: altar-breathe 3.6s ease-in-out infinite;
+    }
+
+    & .altar-ring {
+      stroke: var(--altar-rune);
+      opacity: var(--altar-ring-opacity);
+      transform-box: view-box;
+      transform-origin: 100px 88px;
+      animation: altar-turn 140s linear infinite;
+    }
+    & .altar-ring-notches {
+      fill: var(--altar-rune);
+    }
+
+    & .altar-rim {
+      stroke: var(--altar-rim);
+      stroke-opacity: 0.8;
+    }
+    & .altar-edge-light {
+      stroke: var(--altar-rim);
+      stroke-opacity: 0.5;
+    }
+    & .altar-step-light {
+      stroke: var(--altar-rim);
+      stroke-opacity: 0.35;
+    }
+    & .altar-seal {
+      fill: var(--altar-rune);
+    }
+    & .altar-basin-glow {
+      fill: var(--altar-glow);
+      opacity: 0.55;
+    }
+    & .altar-coals {
+      fill: #c4453a;
+      opacity: 0;
+    }
+    & .altar-smoke {
+      stroke: #8a8296;
+      stroke-dasharray: 26 70;
+      opacity: 0;
+    }
+
+    & .altar-bay {
+      fill: var(--altar-rune);
+    }
+    & .altar-bay-knob {
+      fill: #fff6dc;
+    }
+
+    & .altar-mist {
+      fill: #7b4fd1;
+      opacity: 0.45;
+      animation: altar-drift 9s ease-in-out infinite alternate;
+    }
+    & .altar-spores {
+      fill: #d9c8ff;
+    }
+    & .altar-spores circle {
+      animation: altar-spore 5s ease-in-out infinite;
+    }
+    & .altar-embers {
+      fill: #ffe3a3;
+    }
+    & .altar-embers circle {
+      opacity: 0;
+      animation: altar-ember 3s ease-in infinite;
+    }
+  }
+
+  /* Starting or stopping: a small Shroud-violet flame, the bays lighting
+     one after another and the ring turning faster. */
+  .altar[data-state="kindling"] {
+    --altar-o1: #6a3cbd;
+    --altar-o2: #b78cf2;
+    --altar-m1: #a97be8;
+    --altar-m2: #ffd9a0;
+    --altar-glow: #9e6bea;
+    --altar-rune: #a97be8;
+    --altar-rim: #cdb4f5;
+    --altar-flame-scale: 0.72;
+    --altar-lit-opacity: 0.3;
+
+    & .altar-ring {
+      animation-duration: 24s;
+    }
+    & .altar-flame-motion {
+      animation: altar-swell 2.4s ease-in-out infinite;
+    }
+    & .altar-bay {
+      animation: altar-bay 2.1s ease-in-out infinite;
+    }
+    & .altar-embers {
+      display: none;
+    }
+  }
+
+  /* Running but not answering: a guttering, bloodied orange. */
+  .altar[data-state="faltering"] {
+    --altar-o1: #a5342b;
+    --altar-o2: #e8712a;
+    --altar-m1: #e8712a;
+    --altar-m2: #ffb347;
+    --altar-core: #ffe3a3;
+    --altar-glow: #e8712a;
+    --altar-rune: #b4501a;
+    --altar-rim: #f0a070;
+    --altar-flame-scale: 0.82;
+    --altar-lit-opacity: 0.3;
+
+    & .altar-flame-motion {
+      animation: altar-gutter 1.6s linear infinite;
+    }
+    & .altar-ring {
+      animation-play-state: paused;
+    }
+    & .altar-embers circle:nth-child(odd) {
+      display: none;
+    }
+  }
+
+  /* Out: cold stone, a wisp of smoke over banked coals, and the Shroud
+     creeping up the plinth. */
+  .altar[data-state="out"] {
+    --altar-glow: #000;
+    --altar-rune: #8a8296;
+    --altar-rim: #6a6478;
+    --altar-flame-scale: 0.15;
+    --altar-flame-opacity: 0;
+    --altar-lit-opacity: 0;
+    --altar-ring-opacity: 0.22;
+
+    & .altar-halo,
+    & .altar-basin-glow,
+    & .altar-embers {
+      opacity: 0;
+      animation: none;
+    }
+    & .altar-ring {
+      animation-play-state: paused;
+    }
+    & .altar-rim {
+      stroke-opacity: 0.5;
+    }
+    & .altar-edge-light,
+    & .altar-step-light {
+      stroke-opacity: 0.2;
+    }
+    & .altar-seal {
+      fill: #2a2238;
+    }
+    & .altar-bay {
+      fill: #120c1e;
+    }
+    & .altar-bay-knob {
+      fill: #2a2238;
+    }
+    & .altar-coals {
+      opacity: 0.45;
+      animation: altar-coals 4s ease-in-out infinite;
+    }
+    & .altar-smoke {
+      animation: altar-smoke 4.2s ease-out infinite;
+    }
+    & .altar-mist {
+      opacity: 0.75;
+    }
+  }
+
+  @keyframes altar-lick {
+    0%,
+    100% {
+      transform: scale(1, 1) skewX(0deg);
+    }
+    25% {
+      transform: scale(0.97, 1.05) skewX(-1.5deg);
+    }
+    50% {
+      transform: scale(1.02, 0.97) skewX(1deg);
+    }
+    75% {
+      transform: scale(0.99, 1.03) skewX(-0.5deg);
+    }
+  }
+
+  @keyframes altar-tongue {
+    0%,
+    100% {
+      transform: rotate(0deg) scaleY(1);
+    }
+    50% {
+      transform: rotate(var(--tongue-lean, -5deg)) scaleY(1.14);
+    }
+  }
+
+  @keyframes altar-breathe {
+    0%,
+    100% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes altar-turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes altar-swell {
+    0%,
+    100% {
+      transform: scale(0.92);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes altar-gutter {
+    0%,
+    100% {
+      transform: scale(1, 1);
+      opacity: 1;
+    }
+    16% {
+      transform: scale(0.96, 0.8);
+      opacity: 0.8;
+    }
+    24% {
+      transform: scale(1.02, 1.04);
+      opacity: 1;
+    }
+    56% {
+      transform: scale(0.94, 0.72);
+      opacity: 0.7;
+    }
+    66% {
+      transform: scale(1, 0.94);
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes altar-bay {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    40%,
+    60% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes altar-drift {
+    from {
+      transform: translateX(-7px);
+    }
+    to {
+      transform: translateX(7px);
+    }
+  }
+
+  @keyframes altar-spore {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: translateY(0);
+    }
+    50% {
+      opacity: 0.85;
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes altar-ember {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0);
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--drift, 6px), -58px);
+    }
+  }
+
+  @keyframes altar-coals {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  @keyframes altar-smoke {
+    0% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+    25% {
+      opacity: 0.4;
+    }
+    100% {
+      stroke-dashoffset: -96;
+      opacity: 0;
+    }
+  }
 }

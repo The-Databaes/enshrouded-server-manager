@@ -88,7 +88,7 @@ export const ServerHero = ({
       style={{ "--glow": GLOW[state] } as React.CSSProperties}
     >
       <div className="flex flex-wrap items-center gap-x-8 gap-y-6">
-        <FlameBeacon state={state} className="-my-2 -ml-3" />
+        <FlameBeacon state={state} className="-my-4 -ml-4" />
         <div className="min-w-0 flex-1 space-y-3">
           <p className="eyebrow">Enshrouded dedicated server</p>
           <h1

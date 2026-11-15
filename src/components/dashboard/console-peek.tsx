@@ -25,9 +25,9 @@ export const ConsolePeek = () => {
   return (
     <Link
       to="/console"
-      className="group block overflow-hidden rounded-xl border bg-console shadow-[inset_0_1px_0_0_oklch(1_0_0/3%)] transition-colors outline-none hover:border-shroud/40 focus-visible:ring-2 focus-visible:ring-ring/60"
+      className="group block overflow-hidden rounded-xl border border-border/75 bg-console shadow-[inset_0_1px_0_0_oklch(1_0_0/3%),0_10px_30px_-18px_oklch(0_0_0/60%)] transition-colors outline-none hover:border-shroud/40 focus-visible:ring-2 focus-visible:ring-ring/60"
     >
-      <div className="flex items-center gap-2 border-b px-4 py-2.5 text-xs">
+      <div className="flex items-center gap-2 border-b px-4 py-3 text-sm">
         <TerminalIcon className="size-3.5 text-muted-foreground" />
         <span className="font-semibold">Console</span>
         {live ? (
@@ -41,7 +41,7 @@ export const ConsolePeek = () => {
           <ArrowUpRightIcon className="size-3.5" />
         </span>
       </div>
-      <div className="relative h-60 overflow-hidden px-4 font-mono text-[0.68rem] leading-[1.65] text-foreground/80 mask-[linear-gradient(to_bottom,transparent,black_35%)]">
+      <div className="relative h-60 overflow-hidden px-4 font-mono text-xs leading-[1.6] text-foreground/80 mask-[linear-gradient(to_bottom,transparent,black_35%)]">
         <div className="absolute inset-x-4 bottom-3">
           {tail.length ? (
             tail.map((line) => (

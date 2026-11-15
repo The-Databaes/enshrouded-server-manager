@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
+import { FlameBeacon } from "@/components/brand/flame-beacon";
 import { BrandBanner, LogoMark } from "@/components/brand/logo";
 import { Page, PageHeader } from "@/components/layout/page";
 import {
@@ -261,6 +262,27 @@ const DesignSystem = () => {
       />
 
       <BrandBanner />
+
+      <Section
+        anchor="altar"
+        title="The Flame altar"
+        description="The server's state everywhere it's shown: lit while it runs, a small Shroud flame while it starts or stops, guttering when it stops answering, cold when it's off. Sizes sm (rail), lg (hero) and xl (full-window screens)."
+      >
+        <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
+          {(["lit", "kindling", "faltering", "out"] as const).map((state) => (
+            <figure key={state} className="flex flex-col items-center gap-3">
+              <div className="flex items-end gap-4">
+                <FlameBeacon state={state} size="sm" />
+                <FlameBeacon state={state} />
+              </div>
+              <figcaption className="font-mono text-xs text-muted-foreground">
+                {state}
+              </figcaption>
+            </figure>
+          ))}
+          <FlameBeacon state="lit" size="xl" />
+        </div>
+      </Section>
 
       <Section
         anchor="colors"

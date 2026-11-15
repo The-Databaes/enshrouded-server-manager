@@ -91,6 +91,11 @@ type SectionProps = Omit<React.ComponentProps<"section">, "title"> & {
   layout?: "stacked" | "split";
   /** Draw the fading rule above the section. */
   rule?: boolean;
+  /**
+   * `open` (the default) sits on the page; `panel` sets the section on a
+   * tonal surface, for groups of data that sit beside other groups.
+   */
+  variant?: "open" | "panel";
 };
 
 /** A titled part of a page, divided from its neighbours by a hairline. */
@@ -100,6 +105,7 @@ export const Section = ({
   actions,
   layout = "stacked",
   rule = false,
+  variant = "open",
   className,
   children,
   ...props
@@ -111,6 +117,7 @@ export const Section = ({
         ? "grid gap-x-12 gap-y-5 lg:grid-cols-[15rem_minmax(0,1fr)]"
         : "grid gap-5",
       rule && "relative pt-10",
+      variant === "panel" && "panel gap-4 p-5",
       className,
     )}
     {...props}
@@ -124,12 +131,10 @@ export const Section = ({
         layout === "split" && "lg:flex-col lg:justify-start",
       )}
     >
-      <div className="min-w-0 space-y-1.5">
-        <h2 className="text-[1.05rem] leading-snug font-semibold tracking-[0.06em]">
-          {title}
-        </h2>
+      <div className="min-w-0 space-y-1">
+        <h2 className="text-[1.0625rem] leading-snug font-semibold">{title}</h2>
         {description ? (
-          <p className="max-w-2xl text-[0.84rem] text-pretty text-muted-foreground">
+          <p className="max-w-2xl text-sm text-pretty text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -189,7 +194,8 @@ export const SettingRow = ({
       CONTROL_WIDTHS[control],
       // An ember tick in the gutter marks unsaved edits.
       "before:absolute before:top-4 before:bottom-4 before:-left-4 before:w-0.5 before:rounded-full before:bg-ember before:opacity-0 before:shadow-[0_0_8px_var(--ember)] before:transition-opacity data-changed:before:opacity-100",
-      inactive && "opacity-55",
+      // Dimmed, but still legible: disabled controls inside fade further.
+      inactive && "opacity-75",
       className,
     )}
   >
@@ -204,7 +210,7 @@ export const SettingRow = ({
         {adornment}
       </div>
       {description ? (
-        <div className="text-[0.8rem] text-pretty text-muted-foreground">
+        <div className="text-[0.85rem] text-pretty text-muted-foreground">
           {description}
         </div>
       ) : null}

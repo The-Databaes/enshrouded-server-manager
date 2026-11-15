@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/app-shell/app-shell";
+import { SplashHandoff } from "@/components/app-shell/splash-handoff";
 import { WindowFrame } from "@/components/app-shell/window-frame";
 import { ServerRuntimeProvider } from "@/components/server/server-runtime-provider";
 import { SteamCmdGate } from "@/components/steamcmd/steamcmd-gate";
@@ -41,6 +42,7 @@ const RootComponent = () => {
     <WindowFrame>
       <SteamCmdProvider>
         <ServerRuntimeProvider>
+          <SplashHandoff />
           <SteamCmdGate>
             <AppShell>
               <Outlet />

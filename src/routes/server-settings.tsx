@@ -307,10 +307,10 @@ const ServerSettings = () => {
         </Alert>
       ) : null}
 
-      <div className="grid gap-x-14 gap-y-8 2xl:grid-cols-[12.5rem_minmax(0,1fr)]">
+      <div className="grid gap-x-12 gap-y-8 xl:grid-cols-[13rem_minmax(0,1fr)]">
         <nav
           aria-label="Settings sections"
-          className="flex gap-1 overflow-x-auto 2xl:sticky 2xl:top-8 2xl:flex-col 2xl:self-start"
+          className="flex gap-1 overflow-x-auto border-b border-border/55 pb-2 xl:sticky xl:top-8 xl:flex-col xl:self-start xl:border-b-0 xl:pb-0"
         >
           {SECTIONS.map((id) => {
             const info = SECTION_INFO[id];
@@ -324,7 +324,7 @@ const ServerSettings = () => {
                 aria-current={active ? "page" : undefined}
                 onClick={() => setSection(id)}
                 className={cn(
-                  "group relative flex min-w-44 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                  "group relative flex min-w-44 items-center gap-3 rounded-lg px-3 py-2.5 xl:min-w-0 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   active
                     ? "bg-foreground/[0.055] text-foreground"
                     : "text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground",
@@ -333,7 +333,7 @@ const ServerSettings = () => {
                 {active ? (
                   <span
                     aria-hidden="true"
-                    className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-ember shadow-[0_0_8px_var(--ember)] 2xl:inset-x-auto 2xl:top-3 2xl:bottom-3 2xl:left-0 2xl:h-auto 2xl:w-0.5"
+                    className="absolute inset-x-3 -bottom-2 h-0.5 rounded-full bg-ember shadow-[0_0_8px_var(--ember)] xl:inset-x-auto xl:top-3 xl:bottom-3 xl:left-0 xl:h-auto xl:w-0.5"
                   />
                 ) : null}
                 <info.icon
@@ -346,16 +346,16 @@ const ServerSettings = () => {
                   <span className="block text-sm font-medium">
                     {info.label}
                   </span>
-                  <span className="block truncate text-[0.7rem] text-muted-foreground">
+                  <span className="block truncate text-xs text-muted-foreground">
                     {info.hint}
                   </span>
                 </span>
                 {errors ? (
-                  <span className="rounded-full bg-destructive/15 px-1.5 text-[0.68rem] leading-4.5 font-semibold text-destructive tabular-nums">
+                  <span className="rounded-full bg-destructive/15 px-1.5 text-xs leading-5 font-semibold text-destructive tabular-nums">
                     {errors}
                   </span>
                 ) : edits && !creating ? (
-                  <span className="rounded-full bg-ember/15 px-1.5 text-[0.68rem] leading-4.5 font-semibold text-ember tabular-nums">
+                  <span className="rounded-full bg-ember/15 px-1.5 text-xs leading-5 font-semibold text-ember tabular-nums">
                     {edits}
                   </span>
                 ) : null}

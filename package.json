@@ -2,7 +2,7 @@
   "name": "enshrouded-server-manager",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.21.0",
   "scripts": {
     "dev:vite": "vite dev --port 3000",
     "build:vite": "vite build",

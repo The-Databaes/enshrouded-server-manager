@@ -341,9 +341,7 @@ export const AppSidebar = ({
             {collapsed ? (
               <div className="hairline mx-2 mb-2" />
             ) : (
-              <p className="eyebrow px-2.5 pb-1.5 text-[0.62rem]">
-                {group.label}
-              </p>
+              <p className="eyebrow px-2.5 pb-1.5">{group.label}</p>
             )}
             {group.items.map((item) => (
               <NavLink
@@ -356,7 +354,7 @@ export const AppSidebar = ({
                   players === 0 ? undefined : collapsed ? (
                     <span className="size-1.5 rounded-full bg-shroud shadow-[0_0_6px_var(--shroud)]" />
                   ) : (
-                    <span className="rounded-full bg-shroud/20 px-1.5 text-[0.68rem] leading-4.5 font-semibold text-shroud tabular-nums">
+                    <span className="rounded-full bg-shroud/20 px-1.5 text-xs leading-5 font-semibold text-shroud tabular-nums">
                       {players}
                     </span>
                   )
@@ -407,7 +405,7 @@ export const AppSidebar = ({
             {resolvedTheme === "dark" ? <SunIcon /> : <MoonStarIcon />}
           </RailButton>
           {collapsed ? null : (
-            <span className="ml-auto pr-1 text-[0.68rem] text-muted-foreground/70">
+            <span className="ml-auto pr-1 text-xs text-muted-foreground">
               Server Manager
             </span>
           )}

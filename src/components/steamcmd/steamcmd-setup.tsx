@@ -122,7 +122,7 @@ const ChoiceTile = ({
       <span className="flex items-center gap-2 text-sm font-semibold">
         {title}
         {badge ? (
-          <span className="rounded-full bg-ember/15 px-2 py-0.5 text-[0.65rem] font-semibold text-ember">
+          <span className="rounded-full bg-ember/15 px-2 py-0.5 text-xs font-semibold text-ember">
             {badge}
           </span>
         ) : null}

@@ -17,8 +17,12 @@ const FullScreen = ({
   failed?: boolean;
   children: React.ReactNode;
 }) => (
-  <div className="flex min-h-full animate-page-in flex-col items-center justify-center gap-5 p-6 text-center">
-    <FlameBeacon state={failed ? "faltering" : "kindling"} />
+  <div className="relative isolate flex min-h-full animate-page-in flex-col items-center justify-center gap-6 p-6 text-center">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(40%_45%_at_50%_42%,color-mix(in_oklch,var(--shroud)_14%,transparent),transparent)]"
+    />
+    <FlameBeacon state={failed ? "faltering" : "kindling"} size="xl" />
     {children}
   </div>
 );
@@ -99,10 +103,15 @@ export const SteamCmdGate = ({ children }: { children: React.ReactNode }) => {
   if (!status) {
     return (
       <FullScreen>
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Spinner />
-          Kindling the Flame…
-        </p>
+        <div className="space-y-2">
+          <p className="font-display text-lg font-semibold tracking-[0.08em]">
+            Kindling the Flame…
+          </p>
+          <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Spinner />
+            Reading your setup
+          </p>
+        </div>
       </FullScreen>
     );
   }

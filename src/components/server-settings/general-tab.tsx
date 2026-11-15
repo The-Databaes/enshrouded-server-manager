@@ -185,7 +185,7 @@ export const GeneralTab = ({
             <div className="grid gap-4 md:grid-cols-[7rem_minmax(0,1fr)] md:gap-y-3">
               {TAG_GROUPS.map((group) => (
                 <div key={group.title} className="contents">
-                  <p className="eyebrow pt-2 text-[0.62rem]">{group.title}</p>
+                  <p className="eyebrow pt-2">{group.title}</p>
                   <ToggleGroup
                     type="multiple"
                     spacing={1.5}
@@ -314,7 +314,7 @@ export const GeneralTab = ({
               className="group flex w-full items-start justify-between gap-4 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               <div className="space-y-1.5">
-                <h2 className="flex items-center gap-2 text-[1.05rem] font-semibold tracking-[0.06em]">
+                <h2 className="flex items-center gap-2 text-[1.0625rem] font-semibold">
                   Network and folders
                   {advancedChanged ? (
                     <span className="size-1.5 rounded-full bg-ember shadow-[0_0_6px_var(--ember)]" />

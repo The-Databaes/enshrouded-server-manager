@@ -186,7 +186,7 @@ const Console = () => {
               />
               {query ? (
                 <InputGroupAddon align="inline-end">
-                  <span className="text-[0.68rem] text-muted-foreground tabular-nums">
+                  <span className="text-xs text-muted-foreground tabular-nums">
                     {lines.length}
                   </span>
                   <InputGroupButton

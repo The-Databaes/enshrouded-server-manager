@@ -12,12 +12,26 @@
   "app": {
     "windows": [
       {
+        "label": "splashscreen",
+        "title": "Enshrouded Server Manager",
+        "url": "splashscreen.html",
+        "width": 880,
+        "height": 540,
+        "center": true,
+        "resizable": false,
+        "maximizable": false,
+        "decorations": false,
+        "backgroundColor": "#0C0916"
+      },
+      {
+        "label": "main",
         "title": "Enshrouded Server Manager",
         "width": 1280,
         "height": 960,
         "minWidth": 1024,
         "minHeight": 680,
-        "decorations": false
+        "decorations": false,
+        "visible": false
       }
     ],
     "security": {

@@ -304,12 +304,12 @@ export const WorldSettingRow = memo(
             </label>
             {/* Marks what the preset changes, so picking one shows what it does. */}
             {source === "preset" && preset && !isDefault ? (
-              <Badge variant="neutral" className="h-4.5 text-[0.65rem]">
+              <Badge variant="neutral" className="h-5 text-xs">
                 {preset}
               </Badge>
             ) : null}
             {changed ? (
-              <span className="eyebrow text-[0.6rem] text-ember">Unsaved</span>
+              <span className="eyebrow text-ember">Unsaved</span>
             ) : null}
           </div>
           <p className="text-[0.8rem] text-pretty text-muted-foreground">

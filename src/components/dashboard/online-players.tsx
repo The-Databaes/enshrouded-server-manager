@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { cn } from "cn";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
 
 import { Section } from "@/components/layout/page";
@@ -12,12 +13,19 @@ import type { OnlinePlayer } from "@/lib/server/runtime-types";
 /** A quiet line in place of a list. */
 export const ListNotice = ({
   icon: Icon = UsersIcon,
+  className,
   children,
 }: {
   icon?: React.ComponentType<{ className?: string }>;
+  className?: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex items-center gap-3 border-y border-dashed border-border/70 py-6 text-sm text-muted-foreground">
+  <div
+    className={cn(
+      "flex items-center gap-3 border-y border-dashed border-border/70 py-6 text-sm text-muted-foreground",
+      className,
+    )}
+  >
     <Icon className="size-4 shrink-0 opacity-70" />
     <p className="text-pretty">{children}</p>
   </div>
@@ -44,7 +52,7 @@ export const PlayerRow = ({
         )}
       </p>
       {detailed || player.steamId ? (
-        <p className="truncate font-mono text-[0.7rem] text-muted-foreground">
+        <p className="truncate font-mono text-xs text-muted-foreground">
           {player.steamId ?? "No Steam ID shared"}
           {detailed && player.handle ? ` · handle ${player.handle}` : ""}
         </p>
@@ -54,12 +62,12 @@ export const PlayerRow = ({
       <p className="text-sm tabular-nums">
         {formatDuration(now - player.joinedAt)}
       </p>
-      <p className="text-[0.7rem] text-muted-foreground">online</p>
+      <p className="text-xs text-muted-foreground">online</p>
     </div>
   </li>
 );
 
-/** Who's in the world right now. */
+/** Who's in the world right now, on a panel beside the other groups. */
 export const OnlinePlayers = () => {
   const status = useRuntimeStatus();
   const running = status?.phase === "running";
@@ -71,6 +79,7 @@ export const OnlinePlayers = () => {
   return (
     <Section
       title="Online now"
+      variant="panel"
       description={
         running
           ? `${count} of ${status?.query?.maxPlayers ?? "?"} slots in use`
@@ -86,18 +95,20 @@ export const OnlinePlayers = () => {
       }
     >
       {!running ? (
-        <ListNotice>The world is empty while the server is offline.</ListNotice>
+        <ListNotice className="rounded-lg border border-dashed py-5 pl-4">
+          The world is empty while the server is offline.
+        </ListNotice>
       ) : count === 0 ? (
-        <ListNotice>
+        <ListNotice className="rounded-lg border border-dashed py-5 pl-4">
           Nobody is online. Players appear here as they join.
         </ListNotice>
       ) : players.length === 0 ? (
-        <ListNotice>
+        <ListNotice className="rounded-lg border border-dashed py-5 pl-4">
           {count === 1 ? "1 player is" : `${count} players are`} online. The
           server didn't say who.
         </ListNotice>
       ) : (
-        <ul className="divide-y divide-border/55 border-y border-border/55">
+        <ul className="-my-1 divide-y divide-border/55">
           {players.map((player, i) => (
             // Without a handle or Steam ID (names from queries only), names
             // needn't be unique; the list keeps a stable order.

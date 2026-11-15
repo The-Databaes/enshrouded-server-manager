@@ -1,4 +1,11 @@
 import { cn } from "cn";
+import {
+  ClockIcon,
+  CpuIcon,
+  type LucideIcon,
+  MemoryStickIcon,
+  UsersIcon,
+} from "lucide-react";
 
 import { Sparkline } from "@/components/sparkline";
 import { useNow } from "@/hooks/use-now";
@@ -9,6 +16,7 @@ import { formatBytes } from "@/lib/steamcmd/task";
 
 type VitalProps = {
   label: string;
+  icon: LucideIcon;
   value: React.ReactNode;
   unit?: React.ReactNode;
   hint: React.ReactNode;
@@ -18,17 +26,21 @@ type VitalProps = {
 
 const Vital = ({
   label,
+  icon: Icon,
   value,
   unit,
   hint,
   off = false,
   children,
 }: VitalProps) => (
-  <div className="flex min-w-0 flex-col gap-3 px-6 py-5 first:pl-0 last:pr-0">
-    <p className="eyebrow">{label}</p>
+  <div className="panel flex min-w-0 flex-col gap-3 p-5">
+    <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      {label}
+    </p>
     <p
       className={cn(
-        "flex items-baseline gap-1.5 text-[1.75rem] leading-none font-semibold tracking-tight tabular-nums",
+        "flex items-baseline gap-1.5 text-[2rem] leading-none font-semibold tracking-tight tabular-nums",
         off && "text-muted-foreground/60",
       )}
     >
@@ -40,7 +52,7 @@ const Vital = ({
       ) : null}
     </p>
     <div className="h-8">{children}</div>
-    <p className="truncate text-xs text-muted-foreground">{hint}</p>
+    <p className="truncate text-[0.8125rem] text-muted-foreground">{hint}</p>
   </div>
 );
 
@@ -114,10 +126,11 @@ export const Vitals = ({ history }: { history: PlayerSample[] }) => {
   return (
     <section
       aria-label="Vitals"
-      className="grid grid-cols-4 divide-x divide-border/60"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
     >
       <Vital
         label="Players"
+        icon={UsersIcon}
         value={players ?? "—"}
         unit={query ? `/ ${query.maxPlayers}` : undefined}
         off={players === null}
@@ -135,6 +148,7 @@ export const Vitals = ({ history }: { history: PlayerSample[] }) => {
       </Vital>
       <Vital
         label="CPU"
+        icon={CpuIcon}
         value={live ? percent(live.cpuPercent) : "—"}
         unit={live ? "%" : undefined}
         off={!live}
@@ -146,6 +160,7 @@ export const Vitals = ({ history }: { history: PlayerSample[] }) => {
       </Vital>
       <Vital
         label="Memory"
+        icon={MemoryStickIcon}
         value={live ? formatBytes(live.memoryBytes).split(" ")[0] : "—"}
         unit={live ? formatBytes(live.memoryBytes).split(" ")[1] : undefined}
         off={!live}
@@ -165,6 +180,7 @@ export const Vitals = ({ history }: { history: PlayerSample[] }) => {
       </Vital>
       <Vital
         label="Uptime"
+        icon={ClockIcon}
         value={running && status ? formatDuration(uptimeMs(status, now)) : "—"}
         off={!running}
         hint={

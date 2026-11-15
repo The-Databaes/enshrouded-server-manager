@@ -1,0 +1,1292 @@
+<!doctype html>
+<!--
+  The splash window, shown while the main window loads (src-tauri/src/splash.rs).
+  Static on purpose: it paints at once, before the app's scripts are ready.
+
+  The backend drives it through `window.splash`:
+    init({ version, stage })   once the page has loaded
+    stage("interface" | "steamcmd" | "server")
+    complete()                 the app is ready: fills the progress bar
+    ready()                    plays the finale; the window closes after it
+
+  Opened in a plain browser it runs a demo instead (`?hold` stops before the
+  finale). The altar is the same drawing as components/brand/flame-beacon.tsx.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enshrouded Server Manager</title>
+    <style>
+      @font-face {
+        font-family: "Cinzel";
+        src: url("/splash/cinzel.woff2") format("woff2");
+        font-weight: 400 900;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Barlow";
+        src: url("/splash/barlow-500.woff2") format("woff2");
+        font-weight: 500;
+        font-display: block;
+      }
+
+      :root {
+        --void: #0b0812;
+        --gold-hi: #ffe3a3;
+        --gold: #e8a33d;
+        --gold-lo: #9c6018;
+        --ember: #ffb74d;
+        --shroud: #7b4fd1;
+        --mist: #b78cf2;
+        --text: #e7e0f4;
+        --muted: #9c8fbe;
+        --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: var(--void);
+        color: var(--text);
+        font-family: "Barlow", "Segoe UI", sans-serif;
+        user-select: none;
+        cursor: default;
+      }
+
+      #stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        isolation: isolate;
+        animation: stage-in 0.7s ease both;
+      }
+
+      .layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* Sky ------------------------------------------------------------ */
+
+      .sky {
+        background:
+          radial-gradient(60% 55% at 50% 26%, #3a2a58 0%, transparent 70%),
+          radial-gradient(90% 70% at 50% 30%, #1e1638 0%, #120d22 55%, #0b0812 100%);
+      }
+
+      .star {
+        position: absolute;
+        border-radius: 50%;
+        background: #e6dcff;
+        animation: twinkle var(--t, 4s) ease-in-out var(--d, 0s) infinite;
+      }
+
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: var(--lo, 0.15);
+        }
+        50% {
+          opacity: var(--hi, 0.7);
+        }
+      }
+
+      /* The Flame's light, fanning out once it catches. */
+      .rays {
+        opacity: 0;
+        background: conic-gradient(
+          from 0deg at 50% 23%,
+          transparent 0deg,
+          rgba(255, 183, 77, 0.5) 6deg,
+          transparent 14deg,
+          transparent 38deg,
+          rgba(255, 183, 77, 0.35) 44deg,
+          transparent 52deg,
+          transparent 80deg,
+          rgba(255, 183, 77, 0.45) 85deg,
+          transparent 93deg,
+          transparent 128deg,
+          rgba(255, 183, 77, 0.3) 133deg,
+          transparent 140deg,
+          transparent 172deg,
+          rgba(255, 183, 77, 0.4) 178deg,
+          transparent 186deg,
+          transparent 222deg,
+          rgba(255, 183, 77, 0.35) 227deg,
+          transparent 235deg,
+          transparent 268deg,
+          rgba(255, 183, 77, 0.45) 274deg,
+          transparent 282deg,
+          transparent 316deg,
+          rgba(255, 183, 77, 0.3) 322deg,
+          transparent 330deg
+        );
+        mask-image: radial-gradient(42% 52% at 50% 23%, #000 0%, transparent 100%);
+        mix-blend-mode: screen;
+        transition: opacity 1.6s ease;
+      }
+      .lit .rays {
+        opacity: 0.32;
+        animation: rays-turn 90s linear infinite;
+      }
+      @keyframes rays-turn {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .rays {
+        transform-origin: 50% 23%;
+      }
+
+      /* Embervale: ridges and the ruined spires of the old world --------- */
+
+      .land {
+        width: 100%;
+        height: 100%;
+        animation: land-in 1.4s 0.2s ease both;
+      }
+      @keyframes land-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .beacon-glow {
+        opacity: 0;
+        transition: opacity 1s ease;
+      }
+      .rim-light {
+        opacity: 0;
+        transition: opacity 1.2s ease 0.2s;
+      }
+      .lit .rim-light {
+        opacity: 0.55;
+      }
+      .beacon-core {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .lit .beacon-glow {
+        opacity: 0.7;
+      }
+      .lit .beacon-core {
+        opacity: 1;
+      }
+      .lit .beacon-1 * {
+        transition-delay: 0.7s;
+      }
+      .lit .beacon-2 * {
+        transition-delay: 1.1s;
+      }
+      .lit .beacon-3 * {
+        transition-delay: 1.5s;
+      }
+      .lit .beacon-4 * {
+        transition-delay: 1.9s;
+      }
+      .beacon-glow {
+        animation: beacon-flicker 2.8s ease-in-out infinite;
+      }
+      @keyframes beacon-flicker {
+        50% {
+          r: 7;
+        }
+      }
+
+      /* The Shroud ------------------------------------------------------- */
+
+      .fog {
+        position: absolute;
+        left: 0;
+        width: 200%;
+        pointer-events: none;
+        background-repeat: repeat-x;
+        animation: fog-drift var(--speed, 70s) linear infinite;
+      }
+      @keyframes fog-drift {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+      .fog-far {
+        top: 52%;
+        height: 30%;
+        --speed: 110s;
+        opacity: 0.55;
+        background-image:
+          radial-gradient(18% 45% at 14% 60%, rgba(123, 79, 209, 0.55), transparent 70%),
+          radial-gradient(22% 40% at 32% 50%, rgba(91, 50, 168, 0.5), transparent 70%),
+          radial-gradient(16% 50% at 55% 65%, rgba(123, 79, 209, 0.45), transparent 70%),
+          radial-gradient(22% 42% at 80% 52%, rgba(91, 50, 168, 0.55), transparent 70%);
+        background-size: 50% 100%;
+        filter: blur(6px);
+      }
+      .fog-near {
+        bottom: -6%;
+        height: 34%;
+        --speed: 60s;
+        opacity: 0.85;
+        background-image:
+          radial-gradient(20% 50% at 15% 55%, rgba(123, 79, 209, 0.6), transparent 72%),
+          radial-gradient(26% 45% at 34% 62%, rgba(150, 100, 230, 0.4), transparent 72%),
+          radial-gradient(18% 55% at 60% 50%, rgba(91, 50, 168, 0.6), transparent 72%),
+          radial-gradient(22% 48% at 82% 60%, rgba(123, 79, 209, 0.5), transparent 72%);
+        background-size: 50% 100%;
+        filter: blur(8px);
+        animation-direction: reverse;
+      }
+      /* Fine churning texture in the mist. */
+      .fog-grain {
+        top: 50%;
+        bottom: 0;
+        width: 100%;
+        opacity: 0.35;
+        mix-blend-mode: screen;
+        background-size: 400px 200px;
+        mask-image: linear-gradient(to bottom, transparent, #000 40%, #000);
+        animation: grain-drift 40s linear infinite;
+      }
+      @keyframes grain-drift {
+        to {
+          background-position: -400px 0;
+        }
+      }
+
+      .spore {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f0e4ff 0%, #b78cf2 45%, transparent 70%);
+        opacity: 0;
+        animation: spore-rise var(--t) linear var(--d) infinite;
+      }
+      @keyframes spore-rise {
+        0% {
+          opacity: 0;
+          transform: translate(0, 0);
+        }
+        15% {
+          opacity: var(--o, 0.7);
+        }
+        50% {
+          transform: translate(var(--sway), calc(var(--rise) * -0.5));
+        }
+        85% {
+          opacity: var(--o, 0.7);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(calc(var(--sway) * -0.4), calc(var(--rise) * -1));
+        }
+      }
+
+      /* The altar ---------------------------------------------------------- */
+
+      .altar-wrap {
+        position: absolute;
+        left: 50%;
+        top: 22px;
+        width: 216px;
+        height: 260px;
+        margin-left: -108px;
+        animation: altar-in 1.1s 0.35s var(--ease-out) both;
+      }
+      @keyframes altar-in {
+        from {
+          opacity: 0;
+          transform: translateY(14px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .altar-wrap svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      /* The instant it catches: a burst of light from the basin. */
+      .flash {
+        position: absolute;
+        left: 50%;
+        top: 43%;
+        width: 260px;
+        height: 260px;
+        margin: -130px 0 0 -130px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 246, 220, 0.95) 0%, rgba(255, 183, 77, 0.55) 22%, rgba(232, 113, 42, 0.15) 45%, transparent 68%);
+        opacity: 0;
+        transform: scale(0.2);
+        mix-blend-mode: screen;
+      }
+      .lit .flash {
+        animation: flash 1.1s ease-out both;
+      }
+      @keyframes flash {
+        0% {
+          opacity: 0;
+          transform: scale(0.2);
+        }
+        18% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.5);
+        }
+      }
+
+      .spark {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #fff1c8;
+        box-shadow:
+          0 0 6px 1px rgba(255, 183, 77, 0.9),
+          0 0 12px 2px rgba(232, 113, 42, 0.4);
+        opacity: 0;
+      }
+      .lit .spark {
+        animation: spark-rise var(--t) ease-in var(--d) infinite;
+      }
+      @keyframes spark-rise {
+        0% {
+          opacity: 0;
+          transform: translate(0, 0) scale(1);
+        }
+        12% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translate(var(--drift), var(--rise)) scale(0.3);
+        }
+      }
+
+      /* Altar drawing: the lit and out states of the app's altar. */
+      .altar {
+        --altar-o1: #e8712a;
+        --altar-o2: #ffc65c;
+        --altar-m1: #ffb347;
+        --altar-m2: #ffe3a3;
+        --altar-glow: #ffb74d;
+        --altar-rune: #e8a33d;
+        --altar-rim: #ffd08a;
+        --flame-scale: 1;
+        --flame-opacity: 1;
+        --lit-opacity: 0.45;
+        --ring-opacity: 0.55;
+      }
+      .altar stop,
+      .altar .t {
+        transition:
+          stop-color 1s ease,
+          stop-opacity 1s ease,
+          stroke 1s ease,
+          fill 1s ease,
+          opacity 1s ease;
+      }
+      .altar .s-o1 {
+        stop-color: var(--altar-o1);
+      }
+      .altar .s-o2 {
+        stop-color: var(--altar-o2);
+      }
+      .altar .s-m1 {
+        stop-color: var(--altar-m1);
+      }
+      .altar .s-m2 {
+        stop-color: var(--altar-m2);
+      }
+      .altar .s-glow {
+        stop-color: var(--altar-glow);
+      }
+      .altar .s-lit {
+        stop-color: var(--altar-glow);
+        stop-opacity: var(--lit-opacity);
+      }
+      .altar .flame {
+        transform-box: view-box;
+        transform-origin: 100px 126px;
+        transform: scale(var(--flame-scale));
+        opacity: var(--flame-opacity);
+        transition:
+          transform 1.1s cubic-bezier(0.25, 1.4, 0.4, 1),
+          opacity 0.5s ease;
+      }
+      .altar .lick {
+        transform-box: view-box;
+        transform-origin: 100px 126px;
+        animation: lick 2.3s ease-in-out infinite;
+      }
+      .altar .lick.mid {
+        animation-duration: 1.7s;
+        animation-direction: reverse;
+      }
+      .altar .lick.core {
+        animation-duration: 1.3s;
+        animation-delay: -0.4s;
+      }
+      .altar .tongue {
+        transform-box: fill-box;
+        transform-origin: 50% 100%;
+        animation: tongue 1.9s ease-in-out infinite;
+      }
+      .altar .tongue.left {
+        --lean: 5deg;
+        animation-duration: 2.4s;
+        animation-delay: -0.8s;
+      }
+      .altar .ring {
+        stroke: var(--altar-rune);
+        opacity: var(--ring-opacity);
+        transform-box: view-box;
+        transform-origin: 100px 88px;
+        animation: turn 140s linear infinite;
+      }
+      .altar .ring-notches,
+      .altar .seal,
+      .altar .bay {
+        fill: var(--altar-rune);
+      }
+      .altar .rim {
+        stroke: var(--altar-rim);
+        stroke-opacity: 0.8;
+      }
+      .altar .edge-light {
+        stroke: var(--altar-rim);
+        stroke-opacity: 0.5;
+      }
+      .altar .bloom,
+      .altar .basin-glow {
+        fill: var(--altar-glow);
+        opacity: 0.55;
+      }
+      .altar .halo {
+        transform-box: view-box;
+        transform-origin: 100px 92px;
+        animation: breathe 3.6s ease-in-out infinite;
+      }
+      .altar .coals {
+        fill: #c4453a;
+        opacity: 0;
+      }
+      .altar .smoke {
+        stroke: #8a8296;
+        stroke-dasharray: 26 70;
+        opacity: 0;
+      }
+      .altar .bay-knob {
+        fill: #fff6dc;
+      }
+      .altar .mist {
+        fill: #7b4fd1;
+        opacity: 0.45;
+        animation: drift 9s ease-in-out infinite alternate;
+      }
+
+      /* Before the Flame catches: cold stone and smoke. */
+      .altar[data-state="out"] {
+        --altar-glow: #000;
+        --altar-rune: #8a8296;
+        --altar-rim: #6a6478;
+        --flame-scale: 0.1;
+        --flame-opacity: 0;
+        --lit-opacity: 0;
+        --ring-opacity: 0.18;
+      }
+      .altar[data-state="out"] .halo,
+      .altar[data-state="out"] .basin-glow {
+        opacity: 0;
+        animation: none;
+      }
+      .altar[data-state="out"] .rim {
+        stroke-opacity: 0.5;
+      }
+      .altar[data-state="out"] .edge-light {
+        stroke-opacity: 0.2;
+      }
+      .altar[data-state="out"] .seal,
+      .altar[data-state="out"] .bay-knob {
+        fill: #2a2238;
+      }
+      .altar[data-state="out"] .bay {
+        fill: #120c1e;
+      }
+      .altar[data-state="out"] .coals {
+        opacity: 0.5;
+      }
+      .altar[data-state="out"] .smoke {
+        animation: smoke 3s ease-out infinite;
+      }
+      .altar[data-state="out"] .mist {
+        opacity: 0.75;
+      }
+      /* The bays light one after another as it catches. */
+      .lit .altar .bay {
+        transition-delay: var(--bay-delay);
+      }
+
+      @keyframes lick {
+        0%,
+        100% {
+          transform: scale(1, 1) skewX(0deg);
+        }
+        25% {
+          transform: scale(0.97, 1.05) skewX(-1.5deg);
+        }
+        50% {
+          transform: scale(1.02, 0.97) skewX(1deg);
+        }
+        75% {
+          transform: scale(0.99, 1.03) skewX(-0.5deg);
+        }
+      }
+      @keyframes tongue {
+        0%,
+        100% {
+          transform: rotate(0deg) scaleY(1);
+        }
+        50% {
+          transform: rotate(var(--lean, -5deg)) scaleY(1.14);
+        }
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+      @keyframes turn {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes drift {
+        from {
+          transform: translateX(-7px);
+        }
+        to {
+          transform: translateX(7px);
+        }
+      }
+      @keyframes smoke {
+        0% {
+          stroke-dashoffset: 0;
+          opacity: 0;
+        }
+        25% {
+          opacity: 0.45;
+        }
+        100% {
+          stroke-dashoffset: -96;
+          opacity: 0;
+        }
+      }
+
+      /* Title -------------------------------------------------------------- */
+
+      .title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 298px;
+        text-align: center;
+      }
+      .title h1 {
+        position: relative;
+        margin: 0;
+        font-family: "Cinzel", serif;
+        font-size: 54px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.16em;
+        padding-left: 0.16em;
+        filter: drop-shadow(0 2px 0 rgba(10, 6, 20, 0.9)) drop-shadow(0 0 22px rgba(232, 163, 61, 0.28));
+      }
+      .title h1 span {
+        display: inline-block;
+        background:
+          linear-gradient(105deg, transparent 42%, rgba(255, 251, 236, 0.95) 50%, transparent 58%) var(--sheen, 200%) 0 / 300% 100% no-repeat,
+          linear-gradient(to bottom, var(--gold-hi) 8%, var(--gold) 58%, var(--gold-lo) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        opacity: 0;
+        animation: letter-in 0.9s var(--ease-out) both paused;
+      }
+      .lit .title h1 span {
+        animation-play-state: running;
+      }
+      @keyframes letter-in {
+        from {
+          opacity: 0;
+          filter: blur(10px);
+          transform: translateY(10px) scale(1.06);
+        }
+        to {
+          opacity: 1;
+          filter: blur(0);
+          transform: none;
+        }
+      }
+      /* A glint of light running along the gold, now and then. */
+      .title h1.glint span {
+        animation:
+          letter-in 0.9s var(--ease-out) both,
+          glint 6s ease-in-out 0.4s infinite;
+      }
+      @property --sheen {
+        syntax: "<percentage>";
+        inherits: false;
+        initial-value: 200%;
+      }
+      @keyframes glint {
+        0% {
+          --sheen: 200%;
+        }
+        28%,
+        100% {
+          --sheen: -100%;
+        }
+      }
+
+      .subtitle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 16px;
+        color: #cdb4f5;
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.52em;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 1s ease 0.7s;
+      }
+      .subtitle .label {
+        margin-right: -0.52em;
+      }
+      .lit .subtitle {
+        opacity: 1;
+      }
+      .subtitle .line {
+        width: 0;
+        height: 1px;
+        transition: width 1.2s var(--ease-out) 0.8s;
+      }
+      .subtitle .line.l {
+        background: linear-gradient(to left, rgba(232, 163, 61, 0.8), transparent);
+      }
+      .subtitle .line.r {
+        background: linear-gradient(to right, rgba(232, 163, 61, 0.8), transparent);
+      }
+      .lit .subtitle .line {
+        width: 92px;
+      }
+      .gem {
+        width: 6px;
+        height: 6px;
+        transform: rotate(45deg);
+        background: linear-gradient(135deg, var(--gold-hi), var(--gold-lo));
+        box-shadow: 0 0 8px rgba(255, 183, 77, 0.7);
+      }
+
+      /* Progress ----------------------------------------------------------- */
+
+      .status {
+        position: absolute;
+        left: 50%;
+        bottom: 66px;
+        width: 340px;
+        margin-left: -170px;
+        opacity: 0;
+        transform: translateY(6px);
+        transition:
+          opacity 0.8s ease 0.9s,
+          transform 0.8s var(--ease-out) 0.9s;
+      }
+      .lit .status {
+        opacity: 1;
+        transform: none;
+      }
+      .track {
+        position: relative;
+        height: 2px;
+        border-radius: 2px;
+        background: rgba(156, 143, 190, 0.18);
+        overflow: visible;
+      }
+      .fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        border-radius: 2px;
+        background: linear-gradient(to right, rgba(232, 163, 61, 0.15), var(--gold) 60%, var(--gold-hi));
+        box-shadow: 0 0 10px rgba(255, 183, 77, 0.45);
+      }
+      .head {
+        position: absolute;
+        top: 50%;
+        width: 7px;
+        height: 7px;
+        margin: -3.5px 0 0 -3.5px;
+        transform: rotate(45deg);
+        background: #fff6dc;
+        box-shadow:
+          0 0 8px 2px rgba(255, 183, 77, 0.85),
+          0 0 18px 4px rgba(232, 113, 42, 0.35);
+      }
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-top: 12px;
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      #status-text {
+        transition: opacity 0.25s ease;
+      }
+      #status-text.swap {
+        opacity: 0;
+      }
+      #pct {
+        font-variant-numeric: tabular-nums;
+        color: #cdb4f5;
+      }
+
+      .meta {
+        position: absolute;
+        left: 66px;
+        right: 66px;
+        bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+        color: rgba(156, 143, 190, 0.75);
+        opacity: 0;
+        transition: opacity 1s ease 1.2s;
+      }
+      .lit .meta {
+        opacity: 1;
+      }
+      kbd {
+        font-family: inherit;
+        font-size: 10.5px;
+        padding: 1px 5px;
+        border: 1px solid rgba(156, 143, 190, 0.3);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        color: #cdb4f5;
+      }
+
+      /* Frame and finish ---------------------------------------------------- */
+
+      .frame {
+        width: 100%;
+        height: 100%;
+      }
+      .vignette {
+        background:
+          radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(5, 3, 10, 0.75) 100%),
+          linear-gradient(to bottom, rgba(5, 3, 10, 0.35), transparent 18%);
+      }
+      .grain {
+        opacity: 0.5;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      .drag {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+      }
+
+      @keyframes stage-in {
+        from {
+          opacity: 0;
+        }
+      }
+
+      /* Ready: the Flame flares, then everything fades into the app. */
+      .ready .altar-wrap {
+        animation: flare 0.75s ease-in both;
+      }
+      @keyframes flare {
+        0% {
+          filter: brightness(1);
+          transform: none;
+        }
+        45% {
+          filter: brightness(1.35) drop-shadow(0 0 30px rgba(255, 183, 77, 0.6));
+          transform: scale(1.04);
+        }
+        100% {
+          filter: brightness(1.6) drop-shadow(0 0 40px rgba(255, 183, 77, 0.8));
+          transform: scale(1.06);
+        }
+      }
+      .ready #stage-inner {
+        animation: stage-out 0.4s ease-in 0.35s both;
+      }
+      @keyframes stage-out {
+        to {
+          opacity: 0;
+          transform: scale(1.015);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.2s !important;
+          transition-delay: 0s !important;
+        }
+        .spark,
+        .spore {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="stage-inner" class="layer">
+        <div class="layer sky"></div>
+        <div class="layer" id="stars"></div>
+        <div class="layer rays"></div>
+
+        <!-- Embervale at night: far ridge, ruined spires with beacons, near ridge. -->
+        <svg class="layer land" viewBox="0 0 880 540" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="ridge-far" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2a1f48" />
+              <stop offset="1" stop-color="#160f2a" />
+            </linearGradient>
+            <linearGradient id="ridge-near" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1a1230" />
+              <stop offset="1" stop-color="#0c0818" />
+            </linearGradient>
+            <linearGradient id="outcrop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2a2040" />
+              <stop offset="0.35" stop-color="#1a1230" />
+              <stop offset="1" stop-color="#0c0818" />
+            </linearGradient>
+            <filter id="glow3" x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="3" />
+            </filter>
+          </defs>
+          <path
+            fill="url(#ridge-far)"
+            opacity="0.9"
+            d="M0 330 L40 318 L78 326 L120 300 L160 312 L196 296 L238 318 L282 306 L320 322 L360 314 L400 330 L480 330 L520 316 L566 324 L604 304 L650 314 L690 296 L736 312 L780 300 L826 318 L880 308 V540 H0 Z"
+          />
+          <!-- spires of the old world -->
+          <g fill="#140e26">
+            <path d="M88 392 L94 300 L90 294 L97 286 L100 266 L103 286 L110 294 L106 300 L112 392 Z" />
+            <path d="M156 392 V334 H162 V318 A20 20 0 0 1 202 318 V334 H208 V392 H196 V340 A14 14 0 0 0 168 340 V392 Z" />
+            <path d="M228 392 L232 340 L236 336 L238 322 L242 336 L246 340 L250 392 Z" />
+            <path d="M626 392 L630 346 L634 342 L636 330 L638 342 L642 346 L646 392 Z" />
+            <path d="M676 392 L682 318 L678 312 L684 304 L688 280 L692 304 L698 312 L694 318 L700 392 Z" />
+            <path d="M750 392 L755 290 L750 284 L758 274 L760 246 L762 252 L764 274 L772 284 L767 290 L772 392 Z" />
+            <path d="M762 252 L776 244 L774 250 Z" />
+          </g>
+          <!-- the outcrop the altar stands on, its edge caught by the Flame -->
+          <path
+            fill="url(#outcrop)"
+            d="M270 412 C300 380 322 330 346 298 C356 284 366 270 380 263 L392 259 H488 L500 263 C514 270 524 284 534 298 C558 330 580 380 610 412 Z"
+          />
+          <g fill="#0f0a1d">
+            <path d="M372 296 l10 -6 6 8 -4 6 -10 1 z" />
+            <path d="M506 290 l9 3 3 9 -8 3 -6 -6 z" />
+            <path d="M340 340 l12 -4 5 9 -9 6 -8 -3 z" />
+          </g>
+          <path class="rim-light" d="M380 263 L392 259 H488 L500 263" fill="none" stroke="#ffb74d" stroke-width="5" filter="url(#glow3)" />
+          <path class="rim-light" d="M362 280 C368 272 374 266 380 263 L392 259 H488 L500 263 C506 266 512 272 518 280" fill="none" stroke="#ffd08a" stroke-width="1.2" />
+          <!-- distant beacons answering the Flame -->
+          <g class="beacon-1">
+            <circle class="beacon-glow" cx="100" cy="263" r="6" fill="#ffb74d" filter="url(#glow3)" />
+            <circle class="beacon-core" cx="100" cy="263" r="1.6" fill="#ffe3a3" />
+          </g>
+          <g class="beacon-2">
+            <circle class="beacon-glow" cx="760" cy="243" r="6" fill="#ffb74d" filter="url(#glow3)" />
+            <circle class="beacon-core" cx="760" cy="243" r="1.6" fill="#ffe3a3" />
+          </g>
+          <g class="beacon-3">
+            <circle class="beacon-glow" cx="688" cy="277" r="5" fill="#ffb74d" filter="url(#glow3)" />
+            <circle class="beacon-core" cx="688" cy="277" r="1.3" fill="#ffe3a3" />
+          </g>
+          <g class="beacon-4">
+            <circle class="beacon-glow" cx="238" cy="319" r="4" fill="#ffb74d" filter="url(#glow3)" />
+            <circle class="beacon-core" cx="238" cy="319" r="1.1" fill="#ffe3a3" />
+          </g>
+          <path
+            fill="url(#ridge-near)"
+            d="M0 400 L60 388 L118 396 L170 380 L230 392 L300 384 L360 398 L520 398 L580 384 L640 392 L700 380 L760 394 L820 384 L880 392 V540 H0 Z"
+          />
+        </svg>
+
+        <div class="fog fog-far"></div>
+        <div class="layer fog-grain"></div>
+
+        <div class="altar-wrap">
+          <svg id="altar" class="altar" data-state="out" viewBox="0 0 200 240" aria-hidden="true">
+            <defs>
+              <linearGradient id="a-stone" x1="0" x2="1">
+                <stop offset="0" stop-color="#241F30" />
+                <stop offset="0.3" stop-color="#6A6478" />
+                <stop offset="0.62" stop-color="#453F55" />
+                <stop offset="1" stop-color="#1D1828" />
+              </linearGradient>
+              <linearGradient id="a-lit" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" class="s-lit" />
+                <stop offset="1" class="s-glow" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="a-outer" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" class="s-o1" />
+                <stop offset="1" class="s-o2" stop-opacity="0.8" />
+              </linearGradient>
+              <linearGradient id="a-middle" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" class="s-m1" />
+                <stop offset="1" class="s-m2" />
+              </linearGradient>
+              <radialGradient id="a-halo" cx="100" cy="92" r="82" gradientUnits="userSpaceOnUse">
+                <stop offset="0" class="s-glow" stop-opacity="0.5" />
+                <stop offset="0.5" class="s-glow" stop-opacity="0.12" />
+                <stop offset="1" class="s-glow" stop-opacity="0" />
+              </radialGradient>
+              <filter id="a-b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" /></filter>
+              <filter id="a-b6" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" /></filter>
+            </defs>
+
+            <circle class="halo t" cx="100" cy="92" r="82" fill="url(#a-halo)" />
+            <g class="ring t" fill="none">
+              <circle cx="100" cy="88" r="74" stroke-width="0.8" />
+              <circle cx="100" cy="88" r="64" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.6" />
+              <path class="ring-notches t" stroke="none" d="M100 10l4 4-4 4-4-4zM100 158l4 4-4 4-4-4zM22 88l4-4 4 4-4 4zM178 88l-4-4-4 4 4 4z" />
+              <g stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+                <path transform="rotate(22.5 100 88) translate(100 17)" d="M-2 -4V4M-2 -4L2 -1M-2 0L2 3" />
+                <path transform="rotate(67.5 100 88) translate(100 17)" d="M0 -4V4M-3 -2L0 0L3 -2" />
+                <path transform="rotate(112.5 100 88) translate(100 17)" d="M-2 -4V4M2 -4V4M-2 -1L2 1" />
+                <path transform="rotate(157.5 100 88) translate(100 17)" d="M0 -4V4M0 -4L3 -1L0 2" />
+                <path transform="rotate(202.5 100 88) translate(100 17)" d="M-3 -4L3 4M3 -4L-3 4" />
+                <path transform="rotate(247.5 100 88) translate(100 17)" d="M0 -4V4M-3 1L0 -2L3 1" />
+                <path transform="rotate(292.5 100 88) translate(100 17)" d="M-2 -4V4M-2 -4L2 -2L-2 0" />
+                <path transform="rotate(337.5 100 88) translate(100 17)" d="M0 -4L3 0L0 4L-3 0Z" />
+              </g>
+            </g>
+
+            <g class="flame">
+              <ellipse class="bloom t" cx="100" cy="96" rx="30" ry="34" filter="url(#a-b6)" />
+              <path class="lick" fill="url(#a-outer)" filter="url(#a-b2)" opacity="0.7" d="M100 14C103 30 112 40 121 50C130 60 138 74 137 92C136 112 121 127 100 128C79 127 64 112 63 92C62 76 70 64 78 56C78 66 81 73 87 77C85 62 90 44 100 14Z" />
+              <path class="lick" fill="url(#a-outer)" d="M100 14C103 30 112 40 121 50C130 60 138 74 137 92C136 112 121 127 100 128C79 127 64 112 63 92C62 76 70 64 78 56C78 66 81 73 87 77C85 62 90 44 100 14Z" />
+              <path class="tongue" fill="url(#a-outer)" d="M120 62C127 50 128 40 125 28C133 40 137 54 131 70Z" />
+              <path class="tongue left" fill="url(#a-outer)" d="M75 68C68 58 67 48 71 38C73 48 78 55 84 61Z" />
+              <path class="lick mid" fill="url(#a-middle)" d="M100 40C104 56 118 66 120 88C121 108 112 122 100 124C88 122 79 110 80 94C81 82 87 76 91 68C92 76 95 80 98 82C96 68 97 54 100 40Z" />
+              <path class="lick core" fill="#FFF6DC" d="M100 70C104 82 112 90 112 104C112 116 106 122 100 122C94 122 88 116 88 106C88 96 95 88 100 70Z" />
+            </g>
+            <path class="smoke t" d="M100 120C94 108 106 96 100 84C94 72 104 62 100 50C97 44 101 38 100 32" fill="none" stroke-width="3" stroke-linecap="round" filter="url(#a-b2)" />
+
+            <g fill="url(#a-stone)">
+              <path d="M60 140C47 137 41 126 44 113C46 121 51 126 58 128L62 131Z" />
+              <path d="M140 140C153 137 159 126 156 113C154 121 149 126 142 128L138 131Z" />
+            </g>
+            <g class="edge-light t" fill="none" stroke-width="0.9">
+              <path d="M44 113C46 121 51 126 58 128" />
+              <path d="M156 113C154 121 149 126 142 128" />
+            </g>
+
+            <ellipse cx="100" cy="124" rx="49" ry="7.5" fill="#120C1E" />
+            <ellipse class="basin-glow t" cx="100" cy="124" rx="40" ry="5" filter="url(#a-b2)" />
+            <ellipse class="coals t" cx="100" cy="124" rx="22" ry="3" filter="url(#a-b2)" />
+            <path d="M51 124C53 143 72 155 100 155C128 155 147 143 149 124A49 7.5 0 0 1 51 124Z" fill="url(#a-stone)" />
+            <path d="M51 124C53 143 72 155 100 155C128 155 147 143 149 124A49 7.5 0 0 1 51 124Z" fill="url(#a-lit)" />
+            <path d="M56 136C72 144 128 144 144 136" fill="none" stroke="#0E0A18" stroke-opacity="0.5" stroke-width="1.5" />
+            <path d="M56 137.5C72 145.5 128 145.5 144 137.5" fill="none" stroke="#8A83A0" stroke-opacity="0.2" />
+            <g fill="none" stroke="#0E0A18" stroke-opacity="0.45">
+              <path d="M65.5 141.2l2.5 2.5 2.5-2.5" /><path d="M77.5 143.5l2.5 2.5 2.5-2.5" /><path d="M89.5 144.6l2.5 2.5 2.5-2.5" />
+              <path d="M105.5 144.6l2.5 2.5 2.5-2.5" /><path d="M117.5 143.5l2.5 2.5 2.5-2.5" /><path d="M129.5 141.2l2.5 2.5 2.5-2.5" />
+            </g>
+            <circle class="seal t" cx="100" cy="148" r="2.2" />
+            <path class="rim t" d="M51 124A49 7.5 0 0 0 149 124" fill="none" stroke-width="1.6" />
+
+            <path d="M89 154L92 161H108L111 154Z" fill="#1D1828" />
+            <rect x="83" y="160" width="34" height="4" rx="1" fill="url(#a-stone)" />
+            <path d="M85 164H115L121 204H79Z" fill="url(#a-stone)" />
+            <path d="M85 164H90L84.5 204H79Z" fill="#8A83A0" fill-opacity="0.3" />
+            <path d="M110 164H115L121 204H116Z" fill="#0E0A18" fill-opacity="0.5" />
+            <path d="M84 168H116M83 179H117M82 189H118M81 199H119" stroke="#0E0A18" stroke-opacity="0.35" />
+            <g fill="#120C1E">
+              <rect x="88" y="171" width="24" height="6" rx="3" />
+              <rect x="87.5" y="181" width="25" height="6" rx="3" />
+              <rect x="87" y="191" width="26" height="6" rx="3" />
+            </g>
+            <g class="bay t" style="--bay-delay: 0.35s">
+              <rect x="90" y="172.5" width="15" height="3" rx="1.5" filter="url(#a-b2)" />
+              <rect x="90" y="172.5" width="15" height="3" rx="1.5" />
+              <circle class="bay-knob t" cx="108" cy="174" r="1.6" />
+            </g>
+            <g class="bay t" style="--bay-delay: 0.55s">
+              <rect x="89.5" y="182.5" width="15" height="3" rx="1.5" filter="url(#a-b2)" />
+              <rect x="89.5" y="182.5" width="15" height="3" rx="1.5" />
+              <circle class="bay-knob t" cx="108" cy="184" r="1.6" />
+            </g>
+            <g class="bay t" style="--bay-delay: 0.75s">
+              <rect x="89" y="192.5" width="16" height="3" rx="1.5" filter="url(#a-b2)" />
+              <rect x="89" y="192.5" width="16" height="3" rx="1.5" />
+              <circle class="bay-knob t" cx="108.5" cy="194" r="1.6" />
+            </g>
+            <path d="M72 204H128L132 211H68Z" fill="url(#a-stone)" />
+            <path d="M62 211H138L143 219H57Z" fill="url(#a-stone)" />
+            <path class="edge-light t" d="M72 204H128M62 211H138" stroke-width="1" />
+            <g class="mist t" filter="url(#a-b6)">
+              <ellipse cx="62" cy="220" rx="34" ry="7" />
+              <ellipse cx="140" cy="222" rx="38" ry="6" />
+              <ellipse cx="100" cy="228" rx="54" ry="7" />
+            </g>
+          </svg>
+          <div class="flash"></div>
+          <div id="sparks"></div>
+        </div>
+
+        <div class="layer" id="spores"></div>
+        <div class="fog fog-near"></div>
+
+        <header class="title">
+          <h1 id="title" aria-label="Enshrouded"></h1>
+          <div class="subtitle">
+            <span class="line l"></span><i class="gem"></i>
+            <span class="label">Server Manager</span>
+            <i class="gem"></i><span class="line r"></span>
+          </div>
+        </header>
+
+        <div class="status" role="status" aria-live="polite">
+          <div class="track">
+            <div class="fill" id="fill"></div>
+            <div class="head" id="head"></div>
+          </div>
+          <div class="status-row">
+            <span id="status-text">Preparing the interface</span>
+            <span id="pct">0%</span>
+          </div>
+        </div>
+
+        <div class="meta">
+          <span id="tip"></span>
+          <span id="version"></span>
+        </div>
+
+        <div class="layer vignette"></div>
+        <div class="layer grain"></div>
+
+        <!-- Gilded frame, like the app icon's -->
+        <svg class="layer frame" viewBox="0 0 880 540" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="frame-gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffe3a3" stop-opacity="0.75" />
+              <stop offset="0.5" stop-color="#e8a33d" stop-opacity="0.35" />
+              <stop offset="1" stop-color="#9c6018" stop-opacity="0.65" />
+            </linearGradient>
+          </defs>
+          <rect x="10.5" y="10.5" width="859" height="519" rx="14" fill="none" stroke="url(#frame-gold)" stroke-width="1" />
+          <rect x="16.5" y="16.5" width="847" height="507" rx="10" fill="none" stroke="#b78cf2" stroke-opacity="0.12" stroke-width="1" />
+          <g fill="none" stroke="#e8a33d" stroke-opacity="0.7" stroke-width="1">
+            <path d="M24 52 V30 Q24 24 30 24 H52" />
+            <path d="M828 24 H850 Q856 24 856 30 V52" />
+            <path d="M24 488 V510 Q24 516 30 516 H52" />
+            <path d="M856 488 V510 Q856 516 850 516 H828" />
+          </g>
+          <g fill="#ffd08a">
+            <path d="M440 4.5 l6 6 -6 6 -6 -6 z" />
+            <path d="M440 523.5 l6 6 -6 6 -6 -6 z" opacity="0.7" />
+            <circle cx="24" cy="24" r="1.6" />
+            <circle cx="856" cy="24" r="1.6" />
+            <circle cx="24" cy="516" r="1.6" />
+            <circle cx="856" cy="516" r="1.6" />
+          </g>
+        </svg>
+      </div>
+      <div class="drag" data-tauri-drag-region></div>
+    </div>
+
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const stage = $("stage");
+        const altar = $("altar");
+        const rand = (min, max) => min + Math.random() * (max - min);
+
+        // The mist's churning texture: SVG turbulence, baked into a bitmap
+        // once so the drifting background never re-renders the filter.
+        const mist = new Image();
+        mist.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 400;
+          canvas.height = 200;
+          canvas.getContext("2d").drawImage(mist, 0, 0);
+          document.querySelector(".fog-grain").style.backgroundImage = `url(${canvas.toDataURL()})`;
+        };
+        mist.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Cfilter id='f' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0125 0.04' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.45 0 0 0 0 0.95 0 0 0 1.3 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E";
+
+        // Stars in the upper sky.
+        const stars = document.createDocumentFragment();
+        for (let i = 0; i < 90; i++) {
+          const s = document.createElement("i");
+          s.className = "star";
+          const size = Math.random() < 0.12 ? rand(1.6, 2.2) : rand(0.6, 1.3);
+          s.style.cssText = `left:${rand(0, 100)}%;top:${rand(0, 58) ** 1.08}%;width:${size}px;height:${size}px;--t:${rand(2.5, 6)}s;--d:${-rand(0, 6)}s;--lo:${rand(0.05, 0.25)};--hi:${rand(0.45, 0.95)}`;
+          stars.append(s);
+        }
+        $("stars").append(stars);
+
+        // Shroud spores drifting up out of the mist.
+        const spores = document.createDocumentFragment();
+        for (let i = 0; i < 34; i++) {
+          const s = document.createElement("i");
+          s.className = "spore";
+          const size = rand(3, 7);
+          s.style.cssText = `left:${rand(2, 98)}%;top:${rand(62, 100)}%;width:${size}px;height:${size}px;--t:${rand(9, 18)}s;--d:${-rand(0, 18)}s;--sway:${rand(-40, 40)}px;--rise:${rand(90, 220)}px;--o:${rand(0.35, 0.85)}`;
+          spores.append(s);
+        }
+        $("spores").append(spores);
+
+        // Sparks rising off the Flame once it's lit.
+        const sparks = document.createDocumentFragment();
+        for (let i = 0; i < 18; i++) {
+          const s = document.createElement("i");
+          s.className = "spark";
+          s.style.cssText = `left:${rand(42, 58)}%;top:${rand(30, 42)}%;--t:${rand(2.2, 4.2)}s;--d:${rand(0, 3.5)}s;--drift:${rand(-60, 60)}px;--rise:${-rand(110, 240)}px`;
+          sparks.append(s);
+        }
+        $("sparks").append(sparks);
+
+        // ENSHROUDED, one letter at a time.
+        const title = $("title");
+        [..."ENSHROUDED"].forEach((ch, i) => {
+          const span = document.createElement("span");
+          span.textContent = ch;
+          span.setAttribute("aria-hidden", "true");
+          span.style.animationDelay = `${0.2 + i * 0.06}s`;
+          title.append(span);
+        });
+
+        const TIPS = [
+          "Press <kbd>Ctrl</kbd> <kbd>K</kbd> to find any action or page",
+          "<kbd>Ctrl</kbd> <kbd>B</kbd> tucks the side rail away",
+          "<kbd>Ctrl</kbd> <kbd>S</kbd> saves your server settings",
+          "Stopping the server from the manager saves the world first",
+        ];
+        $("tip").innerHTML = TIPS[Math.floor(Math.random() * TIPS.length)];
+
+        // Progress: each stage the app reports moves the bar on; between
+        // reports it creeps, so a slow step never looks frozen.
+        const STAGES = {
+          start: { at: 8, ceiling: 34, text: "Preparing the interface" },
+          interface: { at: 42, ceiling: 62, text: "Reading your setup" },
+          steamcmd: { at: 68, ceiling: 86, text: "Checking on your server" },
+          server: { at: 90, ceiling: 96, text: "Almost there" },
+          ready: { at: 100, ceiling: 100, text: "The Flame is lit" },
+        };
+        const ORDER = Object.keys(STAGES);
+        let current = "start";
+        let target = STAGES.start.at;
+        let shown = 0;
+
+        const setText = (text) => {
+          const el = $("status-text");
+          if (el.textContent === text) return;
+          el.classList.add("swap");
+          setTimeout(() => {
+            el.textContent = text;
+            el.classList.remove("swap");
+          }, 220);
+        };
+
+        const goTo = (name) => {
+          if (!(name in STAGES) || ORDER.indexOf(name) <= ORDER.indexOf(current)) return;
+          current = name;
+          target = Math.max(target, STAGES[name].at);
+          setText(STAGES[name].text);
+        };
+
+        const tick = () => {
+          const { ceiling } = STAGES[current];
+          if (target < ceiling) target = Math.min(ceiling, target + (ceiling - target) * 0.004 + 0.01);
+          shown += (target - shown) * (current === "ready" ? 0.2 : 0.06);
+          if (current === "ready" && 100 - shown < 0.4) shown = 100;
+          $("fill").style.width = `${shown}%`;
+          $("head").style.left = `${shown}%`;
+          $("pct").textContent = `${Math.floor(shown)}%`;
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+
+        // The Flame catches a moment after the scene appears.
+        const lightUp = () => {
+          stage.classList.add("lit");
+          altar.dataset.state = "lit";
+          setTimeout(() => title.classList.add("glint"), 2200);
+        };
+        const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setTimeout(lightUp, reduced ? 0 : 700);
+
+        window.splash = {
+          init({ version, stage: reached } = {}) {
+            if (version) $("version").textContent = /^\d/.test(version) ? `v${version}` : version;
+            if (reached) {
+              for (const name of ORDER.slice(1, ORDER.indexOf(reached) + 1)) goTo(name);
+            }
+          },
+          stage: goTo,
+          complete() {
+            goTo("ready");
+          },
+          ready() {
+            if (!stage.classList.contains("lit")) lightUp();
+            goTo("ready");
+            stage.classList.add("ready");
+          },
+        };
+
+        // Opened outside the app: play it through on its own.
+        if (!("__TAURI_INTERNALS__" in window)) {
+          const hold = new URLSearchParams(location.search).has("hold");
+          window.splash.init({ version: "Preview" });
+          setTimeout(() => goTo("interface"), 1200);
+          setTimeout(() => goTo("steamcmd"), 1600);
+          setTimeout(() => goTo("server"), 2000);
+          setTimeout(() => window.splash.complete(), 2300);
+          if (!hold) setTimeout(() => window.splash.ready(), 2800);
+        }
+      })();
+    </script>
+  </body>
+</html>

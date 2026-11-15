@@ -374,7 +374,7 @@ export const RolesTab = ({ draft, problems, onChange }: RolesTabProps) => {
                               <li
                                 key={p.message}
                                 className={cn(
-                                  "text-[0.72rem] leading-snug",
+                                  "text-xs leading-snug",
                                   p.blocking
                                     ? "text-destructive"
                                     : "text-warning",

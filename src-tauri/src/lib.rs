@@ -2,6 +2,7 @@ mod config;
 mod error;
 mod pty;
 mod server;
+mod splash;
 mod state;
 mod steamcmd;
 mod util;
@@ -14,6 +15,7 @@ use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WindowEvent};
 use crate::error::Result;
 use crate::server::commands as server_commands;
 use crate::server::runtime::STOP_TIMEOUT;
+use crate::splash::Splash;
 use crate::state::AppState;
 use crate::steamcmd::commands as steamcmd_commands;
 
@@ -23,17 +25,27 @@ pub fn run() {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
     .setup(|app| {
+      app.manage(Splash::new());
+      splash::arm_fallback(app.handle());
       let data_dir = app.path().home_dir()?.join(state::DATA_DIR_NAME);
       app.manage(AppState::load(data_dir, Arc::new(app.handle().clone()))?);
       Ok(())
     })
+    .on_page_load(splash::on_page_load)
     .on_window_event(|window, event| {
-      // Closing the window would take the server down with it, unsaved, so
-      // let the UI ask first (it then calls `app_quit`).
-      if let WindowEvent::CloseRequested { api, .. } = event {
-        if window.state::<AppState>().runtime.is_active() {
-          api.prevent_close();
-          let _ = window.emit(CLOSE_REQUESTED_EVENT, ());
+      let WindowEvent::CloseRequested { api, .. } = event else {
+        return;
+      };
+      match window.label() {
+        // Closed by hand (Alt+F4) before the app appeared: the user wants out.
+        splash::SPLASH_LABEL => window.app_handle().exit(0),
+        // Closing the window would take the server down with it, unsaved, so
+        // let the UI ask first (it then calls `app_quit`).
+        _ => {
+          if window.state::<AppState>().runtime.is_active() {
+            api.prevent_close();
+            let _ = window.emit(CLOSE_REQUESTED_EVENT, ());
+          }
         }
       }
     })
@@ -63,6 +75,8 @@ pub fn run() {
       server_commands::server_kill_external,
       server_commands::server_settings_get,
       server_commands::server_settings_save,
+      splash::splash_progress,
+      splash::splash_ready,
       app_quit,
     ])
     .build(tauri::generate_context!())

@@ -25,17 +25,38 @@ const hourMinute = (secs: number) =>
     minute: "2-digit",
   });
 
-/** Players online over the last day, as an open chart (no frame). */
+/**
+ * Axis ticks on round hours, spaced so there are about six across: reading
+ * 18:00, 21:00, 00:00 is easier than 17:24, 20:01, 22:41.
+ */
+const hourTicks = (from: number, to: number) => {
+  const span = to - from;
+  if (span <= 0) return [];
+  const step = [1, 2, 3, 4, 6, 12].find((h) => span / (h * 3600) <= 7) ?? 24;
+  const stepSecs = step * 3600;
+  const first = new Date(from * 1000);
+  first.setMinutes(0, 0, 0);
+  let t = first.getTime() / 1000;
+  // Align to the step in local time (00:00, 03:00, …).
+  while (t < from || new Date(t * 1000).getHours() % step !== 0) t += 3600;
+  const ticks: number[] = [];
+  for (; t <= to; t += stepSecs) ticks.push(t);
+  return ticks;
+};
+
+/** Players online over the last day. */
 export const PlayerActivity = ({
   history,
   title = "Activity",
   className,
   height = "h-60",
+  variant,
 }: {
   history: PlayerSample[];
   title?: string;
   className?: string;
   height?: string;
+  variant?: "open" | "panel";
 }) => {
   const gradientId = useId();
   const live = useRuntimeStatus()?.phase === "running";
@@ -48,12 +69,18 @@ export const PlayerActivity = ({
     null,
   );
   const top = Math.max(4, peak?.players ?? 0);
+  const ticks = useMemo(
+    () =>
+      data.length < 2 ? [] : hourTicks(data[0].at, data[data.length - 1].at),
+    [data],
+  );
 
   return (
     <Section
       title={title}
       description="Players online over the last 24 hours, sampled every minute while the manager is open."
       className={className}
+      variant={variant}
       actions={
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {peak && peak.players > 0 ? (
@@ -119,11 +146,12 @@ export const PlayerActivity = ({
               type="number"
               scale="time"
               domain={["dataMin", "dataMax"]}
+              ticks={ticks}
               tickFormatter={hourMinute}
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              minTickGap={48}
+              minTickGap={32}
             />
             <YAxis
               tickLine={false}

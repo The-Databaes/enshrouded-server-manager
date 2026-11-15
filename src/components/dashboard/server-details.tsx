@@ -61,6 +61,7 @@ export const ServerDetails = ({ files }: { files: ServerStatus }) => {
   return (
     <Section
       title="Details"
+      variant="panel"
       actions={
         <Button variant="ghost" size="sm" asChild>
           <Link to="/server-settings">
@@ -93,7 +94,7 @@ export const ServerDetails = ({ files }: { files: ServerStatus }) => {
           {files.updateAvailable ? (
             <Link
               to="/servers"
-              className="ml-1 rounded-full bg-warning/15 px-2 py-0.5 text-[0.68rem] font-semibold text-warning hover:bg-warning/25"
+              className="ml-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning hover:bg-warning/25"
             >
               Update
             </Link>
