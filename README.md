@@ -153,7 +153,7 @@ comes in three variants, each used for the range where it reads:
 
 | Sizes  | Source            | Why                                                                   |
 | ------ | ----------------- | --------------------------------------------------------------------- |
-| 16–32  | `icon-micro.svg`  | Cropped in, no frame, brighter stone: a 1px gold ring is noise here   |
+| 16–32  | `icon-micro.svg`  | The Flame alone on a violet tile: the tower is a smudge at this size  |
 | 40–48  | `icon-simple.svg` | Two bays, no masonry: finer detail merges into a smudge               |
 | 64+    | `icon.svg`        | Full detail                                                           |
 

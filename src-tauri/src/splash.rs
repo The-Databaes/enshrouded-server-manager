@@ -18,10 +18,11 @@ use tauri::{AppHandle, Manager, Runtime, Webview};
 pub const SPLASH_LABEL: &str = "splashscreen";
 pub const MAIN_LABEL: &str = "main";
 
-/// Long enough for the splash's opening (the Flame catching) to play.
-const MIN_SHOWN: Duration = Duration::from_millis(2800);
+/// Long enough for the splash's opening (the Flame catching, the name
+/// fading in) to play.
+const MIN_SHOWN: Duration = Duration::from_millis(1600);
 /// The splash's closing flourish, played once the app is ready.
-const FINALE: Duration = Duration::from_millis(750);
+const FINALE: Duration = Duration::from_millis(500);
 /// Show the main window regardless after this long.
 const FALLBACK: Duration = Duration::from_secs(25);
 

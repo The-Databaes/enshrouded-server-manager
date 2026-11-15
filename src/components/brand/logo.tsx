@@ -14,6 +14,7 @@ type LogoMarkProps = Omit<React.ComponentProps<"img">, "src"> & {
   /**
    * Which drawing to show, by rendered size: `micro` up to 32px, `simple`
    * for 40–48px, `detailed` from 64px. Matches the OS icon at each size.
+   * `micro` is the Flame alone; the larger two draw the full beacon tower.
    */
   variant?: keyof typeof VARIANTS;
 };

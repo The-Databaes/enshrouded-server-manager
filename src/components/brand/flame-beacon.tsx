@@ -9,9 +9,6 @@ import type { BeaconState } from "@/lib/server/beacon";
  * at its foot. The three lit bays in the pedestal are the brand icon's
  * sliders. Colours and motion per state live in styles.css (`.altar`), so
  * the flame grows, gutters or dies out smoothly when the server changes.
- *
- * The splash window (public/splashscreen.html) draws the same altar as
- * static markup; keep the two in step when changing the drawing.
  */
 
 /** Rune glyphs on the ring, each drawn in an 8×8 box around 0,0. */

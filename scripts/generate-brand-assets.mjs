@@ -7,7 +7,7 @@
 // One drawing can't serve both 16px and 1024px, so the icon comes in three
 // variants, each used for the range where it reads:
 //
-//   icon-micro.svg   16–32px  cropped, no frame, brighter stone
+//   icon-micro.svg   16–32px  the Flame alone on a violet tile
 //   icon-simple.svg  40–48px  two bays, no masonry
 //   icon.svg         64px+    full detail
 //
