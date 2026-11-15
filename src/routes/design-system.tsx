@@ -19,7 +19,18 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 import { FlameBeacon } from "@/components/brand/flame-beacon";
 import { BrandBanner, LogoMark } from "@/components/brand/logo";
-import { Page, PageHeader } from "@/components/layout/page";
+import {
+  Detail,
+  DetailList,
+  Fact,
+  Facts,
+  Page,
+  PageHeader,
+  Section,
+  SettingList,
+  SettingRow,
+  Unknown,
+} from "@/components/layout/page";
 import {
   Accordion,
   AccordionContent,
@@ -153,28 +164,6 @@ import {
 
 /* ---- helpers ------------------------------------------------------------ */
 
-const Section = ({
-  anchor,
-  title,
-  description,
-  children,
-}: {
-  anchor: string;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) => (
-  <section id={anchor} className="scroll-mt-20 space-y-4">
-    <div>
-      <h2 className="text-lg font-semibold tracking-[0.06em]">{title}</h2>
-      {description ? (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      ) : null}
-    </div>
-    {children}
-  </section>
-);
-
 const Swatch = ({
   name,
   cssVar,
@@ -187,7 +176,7 @@ const Swatch = ({
   <div className="space-y-1.5">
     <div className={`h-14 rounded-lg border ${className}`} />
     <p className="text-xs font-medium">{name}</p>
-    <p className="font-mono text-[0.68rem] text-muted-foreground">{cssVar}</p>
+    <p className="font-mono text-xs text-muted-foreground">{cssVar}</p>
   </div>
 );
 
@@ -264,7 +253,7 @@ const DesignSystem = () => {
       <BrandBanner />
 
       <Section
-        anchor="altar"
+        rule
         title="The Flame altar"
         description="The server's state everywhere it's shown: lit while it runs, a small Shroud flame while it starts or stops, guttering when it stops answering, cold when it's off. Sizes sm (rail), lg (hero) and xl (full-window screens)."
       >
@@ -285,7 +274,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="colors"
+        rule
         title="Colour tokens"
         description="Semantic tokens consumed by every component. Brand and status tokens are Tailwind colours too (bg-ember, text-shroud, border-success/40…)."
       >
@@ -303,39 +292,182 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="typography"
+        rule
         title="Typography"
-        description="Cinzel for headings and titles, Barlow for UI, JetBrains Mono for logs and code."
+        description="Cinzel is for display only: the brand, page titles and the server's name. Everything else is Barlow, and JetBrains Mono for logs and paths. Nothing is set smaller than 12px."
       >
-        <Card>
-          <CardContent className="space-y-4">
-            <p className="font-display text-4xl font-bold tracking-[0.12em]">
-              ENSHROUDED
-            </p>
-            <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
-              Server Manager · Embervale
-            </p>
-            <p className="font-display text-xl font-semibold tracking-[0.03em]">
-              Flame Altar · Revelwood
-            </p>
-            <p className="text-base">
-              Body text uses Barlow. The quick brown fox jumps over the lazy dog
-              while the Shroud creeps across the valley.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Muted supporting text for descriptions and metadata.
-            </p>
-            <pre className="rounded-lg border bg-console p-3 font-mono text-xs">
-              {
-                "[21:42:08] INFO  Thalia placed a Flame Altar in Revelwood\n[21:40:51] WARN  Ilyra ping exceeded 100 ms"
-              }
-            </pre>
-          </CardContent>
-        </Card>
+        <dl className="divide-y divide-border/55 border-t border-border/55">
+          {(
+            [
+              [
+                "Brand",
+                "font-display 4xl bold",
+                <p
+                  key="brand"
+                  className="font-display text-4xl font-bold tracking-[0.12em]"
+                >
+                  ENSHROUDED
+                </p>,
+              ],
+              [
+                "Page title",
+                "h1 · Cinzel 1.85rem",
+                <p
+                  key="h1"
+                  className="font-display text-[1.85rem] leading-tight font-semibold tracking-[0.04em]"
+                >
+                  Server settings
+                </p>,
+              ],
+              [
+                "Eyebrow",
+                "eyebrow · 12px caps",
+                <p key="eyebrow" className="eyebrow">
+                  Embervale · Running
+                </p>,
+              ],
+              [
+                "Section heading",
+                "h2 · Barlow 17px semibold",
+                <p
+                  key="h2"
+                  className="text-[1.0625rem] leading-snug font-semibold"
+                >
+                  Player activity
+                </p>,
+              ],
+              [
+                "Body",
+                "text-sm / text-base",
+                <p key="body" className="max-w-xl text-base">
+                  The quick brown fox jumps over the lazy dog while the Shroud
+                  creeps across the valley.
+                </p>,
+              ],
+              [
+                "Supporting",
+                "text-sm muted",
+                <p key="muted" className="text-sm text-muted-foreground">
+                  Muted text for descriptions and metadata.
+                </p>,
+              ],
+              [
+                "Smallest",
+                "text-xs · 12px floor",
+                <p key="xs" className="text-xs text-muted-foreground">
+                  Badges, hints, chart axes and keyboard keys.
+                </p>,
+              ],
+            ] as const
+          ).map(([name, spec, sample]) => (
+            <div
+              key={name}
+              className="grid items-center gap-x-8 gap-y-1 py-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
+            >
+              <dt className="space-y-0.5">
+                <p className="text-sm font-medium">{name}</p>
+                <p className="font-mono text-xs text-muted-foreground">
+                  {spec}
+                </p>
+              </dt>
+              <dd className="min-w-0">{sample}</dd>
+            </div>
+          ))}
+        </dl>
+        <pre className="mt-4 rounded-lg border bg-console p-3 font-mono text-xs leading-[1.6]">
+          {
+            "[21:42:08] INFO  Thalia placed a Flame Altar in Revelwood\n[21:40:51] WARN  Ilyra ping exceeded 100 ms"
+          }
+        </pre>
       </Section>
 
       <Section
-        anchor="buttons"
+        rule
+        title="Surfaces & layout"
+        description="Most of the app sits open on the page, divided by hairlines and spacing. A panel is for data that sits beside other data, like the dashboard's columns. Cards and dialogs are for real objects."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="panel flex flex-col gap-3 p-5">
+            <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <UsersIcon className="size-4" />
+              Players online
+            </p>
+            <p className="text-[2rem] leading-none font-semibold tabular-nums">
+              3<span className="text-muted-foreground"> / 16</span>
+            </p>
+            <p className="text-[0.8125rem] text-muted-foreground">
+              <code className="font-mono text-xs">panel</code> utility: a tonal
+              surface with a top light and a soft shadow.
+            </p>
+          </div>
+          <Section
+            variant="panel"
+            title="Server details"
+            description={
+              <>
+                <code className="font-mono text-xs">
+                  {'<Section variant="panel">'}
+                </code>{" "}
+                for a titled group.
+              </>
+            }
+          >
+            <DetailList>
+              <Detail label="Version">1.0.2</Detail>
+              <Detail label="Game port">15636</Detail>
+              <Detail label="Last backup">
+                <Unknown />
+              </Detail>
+            </DetailList>
+          </Section>
+        </div>
+
+        <Facts className="mt-8">
+          <Fact label="World last saved" hint="Facts: a spec sheet">
+            4 minutes ago
+          </Fact>
+          <Fact label="Uptime">2h 14m</Fact>
+          <Fact label="Memory">6.2 GB</Fact>
+          <Fact label="Backups">
+            <Unknown>None yet</Unknown>
+          </Fact>
+        </Facts>
+
+        <SettingList className="mt-8">
+          <SettingRow
+            label="Server name"
+            htmlFor={`${id}-row-name`}
+            description="A setting row: what it is on the left, the control on the right."
+          >
+            <Input id={`${id}-row-name`} defaultValue="Embervale" />
+          </SettingRow>
+          <SettingRow
+            label="Voice chat"
+            htmlFor={`${id}-row-voice`}
+            description="Changed but not saved: the ember tick marks it."
+            changed
+          >
+            <Switch id={`${id}-row-voice`} defaultChecked />
+          </SettingRow>
+          <SettingRow
+            label="Who you hear"
+            description="Inactive: another setting makes it moot, but it stays readable."
+            inactive
+          >
+            <Select disabled defaultValue="nearby">
+              <SelectTrigger className="w-full" aria-label="Who you hear">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nearby">Players nearby</SelectItem>
+              </SelectContent>
+            </Select>
+          </SettingRow>
+        </SettingList>
+      </Section>
+
+      <Section
+        rule
         title="Buttons"
         description="Gold is the affirmative action and nothing else. If two gold buttons appear on one screen, one of them is wrong."
       >
@@ -394,7 +526,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="badges"
+        rule
         title="Badges & status"
         description="Status colours are semantic, not brand: verdant for healthy, shroud for in transition, flame for warning, coals for failure."
       >
@@ -440,7 +572,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="forms"
+        rule
         title="Forms"
         description="Inputs, selects, choices and sliders inside Field groups."
       >
@@ -605,7 +737,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="feedback"
+        rule
         title="Feedback"
         description="Alerts, progress and loading states."
       >
@@ -679,7 +811,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="overlays"
+        rule
         title="Overlays"
         description="Dialogs, sheets, popovers, menus and tooltips."
       >
@@ -878,7 +1010,7 @@ const DesignSystem = () => {
       </Section>
 
       <Section
-        anchor="navigation"
+        rule
         title="Navigation & data"
         description="Tabs, tables, pagination, accordion and the calendar."
       >
