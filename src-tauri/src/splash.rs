@@ -106,11 +106,8 @@ pub fn on_page_load<R: Runtime>(webview: &Webview<R>, payload: &PageLoadPayload<
   }
   let app = webview.app_handle();
   let stage = app
-    .state::<Splash>()
-    .stage
-    .lock()
-    .map(|stage| *stage)
-    .unwrap_or_default();
+    .try_state::<Splash>()
+    .and_then(|splash| splash.stage.lock().ok().and_then(|stage| *stage));
   let init = json!({ "version": app.package_info().version.to_string(), "stage": stage });
   let _ = webview.eval(format!("window.splash?.init({init})"));
 }

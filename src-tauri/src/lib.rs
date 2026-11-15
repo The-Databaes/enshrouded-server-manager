@@ -24,8 +24,11 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_dialog::init())
+    // Managed on the builder, not in setup: the windows in tauri.conf.json
+    // are created before setup runs, and the splash page can finish loading
+    // (and reach on_page_load) before setup gets a look in.
+    .manage(Splash::new())
     .setup(|app| {
-      app.manage(Splash::new());
       splash::arm_fallback(app.handle());
       let data_dir = app.path().home_dir()?.join(state::DATA_DIR_NAME);
       app.manage(AppState::load(data_dir, Arc::new(app.handle().clone()))?);
