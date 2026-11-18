@@ -61,6 +61,12 @@ export type AppError = {
     | "cancelled"
     | "unsupported"
     | "steamcmd"
+    | "server"
+    | "serverRunning"
+    | "update"
+    | "updateOffline"
+    | "updateNoRelease"
+    | "updateVerification"
     | "unknown";
   message: string;
 };

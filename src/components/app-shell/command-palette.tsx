@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Command as CommandPrimitive } from "cmdk";
 import {
   ArchiveIcon,
+  CircleFadingArrowUpIcon,
   CornerDownLeftIcon,
   DownloadIcon,
   FileCogIcon,
@@ -47,6 +48,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { useServer } from "@/hooks/use-server";
 import { useServerActions, useServerRuntime } from "@/hooks/use-server-runtime";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
+import { useUpdateActions, useUpdater } from "@/hooks/use-updater";
 import { steamcmdApi } from "@/lib/steamcmd/api";
 
 type Confirmable = "stop" | "restart";
@@ -119,6 +121,9 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const status = useServerRuntime((s) => s.status);
   const settings = useServerRuntime((s) => s.settings);
   const [confirm, setConfirm] = useState<Confirmable | null>(null);
+  const appUpdate = useUpdater((s) => s.update);
+  const updating = useUpdater((s) => s.install !== null);
+  const updates = useUpdateActions();
 
   const phase = status?.phase ?? "stopped";
   const players = status?.query?.players ?? 0;
@@ -312,6 +317,30 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
                   ) : null}
                 </Group>
               ) : null}
+
+              <Group heading="Manager">
+                {appUpdate ? (
+                  <Item
+                    icon={CircleFadingArrowUpIcon}
+                    tone="ember"
+                    label={
+                      updating
+                        ? "Show the update's progress"
+                        : `Update the manager to ${appUpdate.version}`
+                    }
+                    keywords={["update", "upgrade", "new version", "release"]}
+                    onSelect={run(updates.openDialog)}
+                  />
+                ) : null}
+                {updating ? null : (
+                  <Item
+                    icon={RefreshCwIcon}
+                    label="Check for manager updates"
+                    keywords={["update", "upgrade", "version", "release"]}
+                    onSelect={run(() => updates.check({ toasts: true }))}
+                  />
+                )}
+              </Group>
 
               <Group heading="Appearance">
                 <Item

@@ -39,6 +39,18 @@ pub enum Error {
   /// Not possible while the server is running (or because one already is).
   #[error("{0}")]
   ServerRunning(String),
+  /// Updating the manager itself failed.
+  #[error("{0}")]
+  Update(String),
+  /// The update server couldn't be reached (offline, timed out, a proxy).
+  #[error("{0}")]
+  UpdateOffline(String),
+  /// Nothing has been published at the update endpoint yet.
+  #[error("{0}")]
+  UpdateNoRelease(String),
+  /// The download didn't match its signature.
+  #[error("{0}")]
+  UpdateVerification(String),
 }
 
 impl Error {
@@ -56,6 +68,10 @@ impl Error {
       Self::SteamCmd(_) => "steamcmd",
       Self::Server(_) => "server",
       Self::ServerRunning(_) => "serverRunning",
+      Self::Update(_) => "update",
+      Self::UpdateOffline(_) => "updateOffline",
+      Self::UpdateNoRelease(_) => "updateNoRelease",
+      Self::UpdateVerification(_) => "updateVerification",
     }
   }
 }

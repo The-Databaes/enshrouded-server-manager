@@ -6,6 +6,7 @@ use tokio_util::sync::CancellationToken;
 use crate::config::ConfigStore;
 use crate::error::{Error, IoContext, Result};
 use crate::server::runtime::{Events, ServerRuntime};
+use crate::updater::Updater;
 
 /// Name of the folder in the user's home directory that holds everything the
 /// app stores: `config.json`, the app-managed SteamCMD and (by default) the
@@ -22,6 +23,8 @@ pub struct AppState {
   pub steamcmd_job: JobSlot,
   /// The dedicated server process, when it runs.
   pub runtime: ServerRuntime,
+  /// The manager's own updates.
+  pub updater: Updater,
 }
 
 impl AppState {
@@ -33,6 +36,7 @@ impl AppState {
       data_dir,
       steamcmd_job: JobSlot::default(),
       runtime: ServerRuntime::new(events),
+      updater: Updater::default(),
     })
   }
 

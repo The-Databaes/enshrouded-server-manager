@@ -27,6 +27,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { UpdateIndicator } from "@/components/updater/update-indicator";
 import { useServerRuntime } from "@/hooks/use-server-runtime";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 import { beaconState } from "@/lib/server/beacon";
@@ -366,6 +367,7 @@ export const AppSidebar = ({
       </nav>
 
       <div className={cn("space-y-2 p-3", collapsed && "px-2")}>
+        <UpdateIndicator collapsed={collapsed} />
         <JobIndicator collapsed={collapsed} />
         <div className="space-y-1">
           {FOOTER_NAV.map((item) => (

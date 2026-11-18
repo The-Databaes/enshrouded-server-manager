@@ -14,6 +14,7 @@ import { SteamCmdProvider } from "@/components/steamcmd/steamcmd-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { UpdaterProvider } from "@/components/updater/updater-provider";
 import appCss from "../styles.css?url";
 
 const RootDocument = ({ children }: { children: React.ReactNode }) => {
@@ -42,12 +43,14 @@ const RootComponent = () => {
     <WindowFrame>
       <SteamCmdProvider>
         <ServerRuntimeProvider>
-          <SplashHandoff />
-          <SteamCmdGate>
-            <AppShell>
-              <Outlet />
-            </AppShell>
-          </SteamCmdGate>
+          <UpdaterProvider>
+            <SplashHandoff />
+            <SteamCmdGate>
+              <AppShell>
+                <Outlet />
+              </AppShell>
+            </SteamCmdGate>
+          </UpdaterProvider>
         </ServerRuntimeProvider>
       </SteamCmdProvider>
     </WindowFrame>

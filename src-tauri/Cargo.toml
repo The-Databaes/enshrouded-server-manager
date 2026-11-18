@@ -23,6 +23,8 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 tauri-plugin-dialog = "2.8.1"
+# The manager updates itself; desktop-only, like the rest of the app.
+tauri-plugin-updater = "2.14.1"
 thiserror = "2.0.21"
 # native-tls uses SChannel on Windows (no build tooling, honours the OS cert store);
 # system-proxy picks up the Windows proxy settings.
@@ -68,3 +70,4 @@ missing_panics_doc = "warn"
 
 [dev-dependencies]
 tempfile = "3.27.0"
+

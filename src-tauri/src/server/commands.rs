@@ -360,6 +360,11 @@ pub async fn server_start(state: State<'_, AppState>) -> Result<RuntimeStatus> {
 }
 
 fn start(state: &AppState) -> Result<RuntimeStatus> {
+  if state.updater.is_installing() {
+    return Err(Error::Server(
+      "The manager is installing an update. Start the server once it has restarted.".into(),
+    ));
+  }
   // Holding the SteamCMD slot while starting means an update can't begin
   // between the checks and the server taking hold of its files.
   let job = state.steamcmd_job.start().map_err(|e| match e {

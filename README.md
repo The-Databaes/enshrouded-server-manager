@@ -230,6 +230,49 @@ To build the TanStack Start frontend and the Tauri application for release:
 pnpm tauri build
 ```
 
+This doesn't need the updater's signing key. Updater artifacts are only built by the release
+workflow, which adds `--config src-tauri/tauri.release.conf.json`.
+
+### Releasing and updates
+
+The manager updates itself with [Tauri's updater](https://v2.tauri.app/plugin/updater/). It
+checks `releases/latest/download/latest.json` on this repository 15 seconds after it starts
+and every six hours after that. It never installs anything without asking.
+
+Installing an update runs in this order (`src-tauri/src/updater.rs`):
+
+1. The new version downloads and its signature is checked while the server keeps running.
+2. The server stops, which saves the world.
+3. The NSIS installer takes over. On Windows that exits the manager and opens the new version.
+   If the user asked for it, the server starts again then.
+
+Nothing installs in a development build: the update downloads and is verified, then it stops.
+
+**One-time setup**
+
+- The repository must be **public**. The updater downloads release assets without logging in.
+- The signing key pair was generated with `pnpm tauri signer generate`. The private key is at
+  `~/.tauri/enshrouded-server-manager.key`, protected by a password, and is never committed.
+  The public key is in `plugins.updater.pubkey` in `tauri.conf.json`. Back up the private key
+  and its password: **if either is lost, installed copies can never be updated again.**
+- Add two repository secrets: `TAURI_SIGNING_PRIVATE_KEY` (the contents of the key file) and
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+
+**Each release**
+
+1. Bump `version` in `src-tauri/tauri.conf.json`. Users are only offered a version greater
+   than the one they run.
+2. Commit, then `git tag v0.2.0 && git push origin v0.2.0`. The workflow fails if the tag and
+   the version differ.
+3. `.github/workflows/release.yml` builds and signs the installer. It attaches the installer
+   and `latest.json` to a **draft** release, with GitHub's generated notes. Those notes appear
+   as "What's new" in the app.
+4. Publish the draft. Until then nobody is offered the update: GitHub's "latest" skips drafts
+   and pre-releases.
+
+To try the update UI in a browser, add `?mockUpdate=available` to the dev server URL. The other
+values are `badsig`, `nosize`, `norelease`, `offline` and `none`.
+
 ### Running tests
 
 ```shell

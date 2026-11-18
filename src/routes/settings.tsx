@@ -18,6 +18,7 @@ import {
 } from "@/components/layout/page";
 import { SteamCmdSettings } from "@/components/steamcmd/steamcmd-settings-card";
 import { Kbd } from "@/components/ui/kbd";
+import { UpdatesSettings } from "@/components/updater/updates-settings";
 import { useSteamCmd } from "@/hooks/use-steamcmd";
 
 const THEMES = [
@@ -190,7 +191,7 @@ const Settings = () => (
   <Page>
     <PageHeader
       title="App settings"
-      description="How the manager looks, the SteamCMD it uses, and where it keeps its things."
+      description="How the manager looks, the SteamCMD it uses, its updates, and where it keeps its things."
     />
     <Section
       layout="split"
@@ -206,6 +207,14 @@ const Settings = () => (
       description="Valve's command-line Steam client. It downloads and updates the server's files."
     >
       <SteamCmdSettings />
+    </Section>
+    <Section
+      layout="split"
+      rule
+      title="Updates"
+      description="New versions of the manager. It always asks before installing, and keeps your server safe while it does."
+    >
+      <UpdatesSettings />
     </Section>
     <Section
       layout="split"

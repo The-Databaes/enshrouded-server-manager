@@ -5,6 +5,7 @@ mod server;
 mod splash;
 mod state;
 mod steamcmd;
+mod updater;
 mod util;
 
 use std::sync::Arc;
@@ -29,6 +30,9 @@ pub fn run() {
     // (and reach on_page_load) before setup gets a look in.
     .manage(Splash::new())
     .setup(|app| {
+      app
+        .handle()
+        .plugin(tauri_plugin_updater::Builder::new().build())?;
       splash::arm_fallback(app.handle());
       let data_dir = app.path().home_dir()?.join(state::DATA_DIR_NAME);
       app.manage(AppState::load(data_dir, Arc::new(app.handle().clone()))?);
@@ -80,6 +84,8 @@ pub fn run() {
       server_commands::server_settings_save,
       splash::splash_progress,
       splash::splash_ready,
+      updater::app_update_check,
+      updater::app_update_install,
       app_quit,
     ])
     .build(tauri::generate_context!())

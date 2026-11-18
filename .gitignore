@@ -31,3 +31,7 @@ todos.json
 *.njsproj
 *.sln
 *.sw?
+
+# Updater signing keys live in ~/.tauri, never in the repo
+*.key
+*.key.pub
