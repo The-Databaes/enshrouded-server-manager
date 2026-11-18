@@ -871,6 +871,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099"
 
 [[package]]
+name = "enshrouded-server-manager"
+version = "0.1.0"
+dependencies = [
+ "portable-pty",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tauri-plugin-updater",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tokio-util",
+ "zip",
+]
+
+[[package]]
 name = "enumflags2"
 version = "0.7.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4069,27 +4090,6 @@ dependencies = [
  "webview2-com",
  "windows 0.62.2",
  "wry",
-]
-
-[[package]]
-name = "tauri-tanstack-start-react-template"
-version = "0.1.0"
-dependencies = [
- "portable-pty",
- "reqwest",
- "serde",
- "serde_json",
- "sysinfo",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tauri-plugin-updater",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tokio-util",
- "zip",
 ]
 
 [[package]]
